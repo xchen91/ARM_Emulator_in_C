@@ -10,6 +10,8 @@
 /* Assembly functions to emulate */
 int add_a(int a, int b);
 int add2_a(int a, int b);
+int mov_a(int a, int b);
+int sub_a(int a, int b);
 
 /* The complete machine state */
 struct arm_state {
@@ -197,6 +199,10 @@ void armemu_one(struct arm_state *state)
         armemu_bx(state);
     } else if (is_add_inst(iw)) {
         armemu_add(state);
+    } else if (is_sub_inst(iw)) {
+	armemu_sub(state);
+    } else if (is_mov_inst(iw)) {
+	armemu_mov(state);
     }
 }
 
@@ -227,7 +233,19 @@ int main(int argc, char **argv)
     arm_state_print(&state);
     r = armemu(&state);
     printf("armemu(add2_a(1,2)) = %d\n", r);
-    
+
+    /* Emulate sub_a */
+    arm_state_init(&state, (unsigned int *) sub_a, 3, 2, 0, 0);
+    arm_state_print(&state);
+    r = armemu(&state);
+    printf("armemu(sub_a(3,2)) = %d\n", r);
+
+    /* Emulate mov_a.s */
+    arm_state_init(&state, (unsigned int *) mov_a, 1, 2, 0, 0);
+    arm_state_print(&state);
+    r = armemu(&state);
+    printf("armemu(mov_a(1,2)) = %d\n", r);
+
     return 0;
 
 }
