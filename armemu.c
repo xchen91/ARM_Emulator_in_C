@@ -12,6 +12,7 @@ int add_a(int a, int b);
 int add2_a(int a, int b);
 int mov_a(int a, int b);
 int sub_a(int a, int b);
+int mul_a(int a, int b);
 
 /* The complete machine state */
 struct arm_state {
@@ -169,6 +170,33 @@ void armemu_sub(struct arm_state *state)
     }
 }
 
+bool is_mul_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int cmd;
+
+    op = (iw >> 26) & 0b11;
+    cmd = (iw >> 21) & 0b111;
+
+    return (op == 0) && (cmd == 0b000);
+}
+
+void armemu_mul(struct arm_state *state)
+{
+    unsigned int iw;
+    unsigned int rd, rn, rm;
+
+    iw = *((unsigned int *) state->regs[PC]);
+    rd = (iw >> 16) & 0xF;
+    rn = iw & 0xF;
+    rm = (iw >> 8) & 0xF;
+
+    state->regs[rd] = state->regs[rn] * state->regs[rm];
+    if (rd != PC) {
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
 bool is_bx_inst(unsigned int iw)
 {
     unsigned int bx_code;
@@ -203,6 +231,8 @@ void armemu_one(struct arm_state *state)
 	armemu_sub(state);
     } else if (is_mov_inst(iw)) {
 	armemu_mov(state);
+    } else if (is_mul_inst(iw)) {
+        armemu_mul(state);
     }
 }
 
@@ -245,6 +275,13 @@ int main(int argc, char **argv)
     arm_state_print(&state);
     r = armemu(&state);
     printf("armemu(mov_a(1,2)) = %d\n", r);
+
+    /* Emulate mul_a.s */
+    arm_state_init(&state, (unsigned int *) mul_a, 2, 3, 0, 0);
+    arm_state_print(&state);
+    r = armemu(&state);
+    printf("armemu(mul_a(2,3)) = %d\n", r);
+
 
     return 0;
 
