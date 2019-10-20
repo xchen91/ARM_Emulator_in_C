@@ -64,6 +64,45 @@ void arm_state_print(struct arm_state *as)
     printf("cpsr = %X\n", as->cpsr);
 }
 
+//check if the instruction is for register or immediate value
+bool is_immediate(unsigned int iw)
+{
+    unsigned int immop;
+    immop = (iw >> 25) & 0b1;
+    return (immop == 1);
+}
+
+bool is_mov_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int opcode;
+
+    op = (iw >> 26) & 0b11;
+    opcode = (iw >> 21) & 0b1111;
+
+    return (op == 0) && (opcode == 0b1101);
+}
+
+void armemu_mov(struct arm_state *state)
+{
+    unsigned int iw;
+    unsigned int rd, op2;
+
+    iw = *((unsigned int *) state->regs[PC]);
+
+    rd = (iw >> 12) & 0xF;
+    if (is_immediate(iw)){
+        op2 = iw & 0xFF;
+        state->regs[rd] = op2;
+    }else{
+        op2 = iw & 0xF;
+        state->regs[rd] = state->regs[op2];
+    }
+    if (rd != PC) {
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
 bool is_add_inst(unsigned int iw)
 {
     unsigned int op;
@@ -84,9 +123,45 @@ void armemu_add(struct arm_state *state)
     
     rd = (iw >> 12) & 0xF;
     rn = (iw >> 16) & 0xF;
-    rm = iw & 0xF;
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        state->regs[rd] = state->regs[rn] + rm;
+    }else{
+	rm = iw & 0xF;
+        state->regs[rd] = state->regs[rn] + state->regs[rm];
+    }
+    if (rd != PC) {
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
 
-    state->regs[rd] = state->regs[rn] + state->regs[rm];
+bool is_sub_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int opcode;
+
+    op = (iw >> 26) & 0b11;
+    opcode = (iw >> 21) & 0b1111;
+
+    return (op == 0) && (opcode == 0b0010);
+}
+
+void armemu_sub(struct arm_state *state)
+{
+    unsigned int iw;
+    unsigned int rd, rn, rm;
+
+    iw = *((unsigned int *) state->regs[PC]);
+
+    rd = (iw >> 12) & 0xF;
+    rn = (iw >> 16) & 0xF;
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        state->regs[rd] = state->regs[rn] - rm;
+    }else{
+        rm = iw & 0xF;
+        state->regs[rd] = state->regs[rn] - state->regs[rm];
+    }
     if (rd != PC) {
         state->regs[PC] = state->regs[PC] + 4;
     }
@@ -154,4 +229,5 @@ int main(int argc, char **argv)
     printf("armemu(add2_a(1,2)) = %d\n", r);
     
     return 0;
+
 }
