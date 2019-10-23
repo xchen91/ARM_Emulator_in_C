@@ -1,7 +1,7 @@
 PROGS = analyze armemu
 
 OBJS_ANALYZE = addsub_a.o
-OBJS_ARMEMU = add_a.o add2_a.o sub_a.o mov_a.o mul_a.o
+OBJS_ARMEMU = add_a.o add2_a.o sub_a.o mov_a.o mul_a.o cmp_a.o
 
 CFLAGS = -g
 

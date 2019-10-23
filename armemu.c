@@ -13,6 +13,7 @@ int add2_a(int a, int b);
 int mov_a(int a, int b);
 int sub_a(int a, int b);
 int mul_a(int a, int b);
+int cmp_a(int a, int b);
 
 /* The complete machine state */
 struct arm_state {
@@ -170,6 +171,50 @@ void armemu_sub(struct arm_state *state)
     }
 }
 
+bool is_cmp_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int opcode;
+
+    op = (iw >> 26) & 0b11;
+    opcode = (iw >> 21) & 0b1111;
+
+    return (op == 0) && (opcode == 0b1010);
+}
+
+void armemu_cmp(struct arm_state *state)
+{
+    unsigned int iw;
+    unsigned int rd, rn, rm;
+    int cond;
+
+    iw = *((unsigned int *) state->regs[PC]);
+
+    rd = (iw >> 12) & 0xF;
+    rn = (iw >> 16) & 0xF;
+
+    state->cpsr = 0;
+
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        cond = (int)(state->regs[rn] - rm);
+    }else{
+        rm = iw & 0xF;
+        cond = (int)(state->regs[rn] - state->regs[rm]);
+    }
+
+    if(cond == 0){
+        state->cpsr = state->cpsr | (0b0000 << 28);
+    }else if(cond < 0){
+        state->cpsr = state->cpsr | (0b1011 << 28);
+    }else if(cond > 0){
+        state->cpsr = state->cpsr | (0b1100 << 28);
+    }
+    if (rd != PC) {
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
 bool is_mul_inst(unsigned int iw)
 {
     unsigned int op;
@@ -280,7 +325,13 @@ int main(int argc, char **argv)
     arm_state_init(&state, (unsigned int *) mul_a, 2, 3, 0, 0);
     arm_state_print(&state);
     r = armemu(&state);
-    printf("armemu(mul_a(2,3)) = %d\n", r);
+    printf("armemu(mul_a(2,3)) = %d\n", r);  
+
+    /* Emulate cmp_a.s */
+    arm_state_init(&state, (unsigned int *) cmp_a, 1, 2, 0, 0);
+    arm_state_print(&state);
+    r = armemu(&state);
+    printf("armemu(cmp_a(1,2)) = %d\n", r);
 
 
     return 0;
