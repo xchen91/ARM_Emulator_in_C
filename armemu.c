@@ -12,7 +12,6 @@ int add_a(int a, int b);
 int add2_a(int a, int b);
 int mov_a(int a, int b);
 int sub_a(int a, int b);
-int mul_a(int a, int b);
 int cmp_a(int a, int b);
 
 /* The complete machine state */
@@ -68,178 +67,27 @@ void arm_state_print(struct arm_state *as)
     printf("cpsr = %X\n", as->cpsr);
 }
 
-//check if the instruction is for register or immediate value
-bool is_immediate(unsigned int iw)
-{
-    unsigned int immop;
-    immop = (iw >> 25) & 0b1;
-    return (immop == 1);
-}
-
-bool is_mov_inst(unsigned int iw)
+bool is_data_inst(unsigned int iw)
 {
     unsigned int op;
-    unsigned int opcode;
-
     op = (iw >> 26) & 0b11;
-    opcode = (iw >> 21) & 0b1111;
-
-    return (op == 0) && (opcode == 0b1101);
+    return (op == 00);
 }
 
-void armemu_mov(struct arm_state *state)
-{
-    unsigned int iw;
-    unsigned int rd, op2;
-
-    iw = *((unsigned int *) state->regs[PC]);
-
-    rd = (iw >> 12) & 0xF;
-    if (is_immediate(iw)){
-        op2 = iw & 0xFF;
-        state->regs[rd] = op2;
-    }else{
-        op2 = iw & 0xF;
-        state->regs[rd] = state->regs[op2];
-    }
-    if (rd != PC) {
-        state->regs[PC] = state->regs[PC] + 4;
-    }
-}
-
-bool is_add_inst(unsigned int iw)
+bool is_memory_inst(unsigned int iw)
 {
     unsigned int op;
-    unsigned int opcode;
-
     op = (iw >> 26) & 0b11;
-    opcode = (iw >> 21) & 0b1111;
-
-    return (op == 0) && (opcode == 0b0100);
+    return (op == 01);
 }
 
-void armemu_add(struct arm_state *state)
+bool is_b_inst(unsigned int iw)
 {
-    unsigned int iw;
-    unsigned int rd, rn, rm;
+    unsigned int b_code;
 
-    iw = *((unsigned int *) state->regs[PC]);
-    
-    rd = (iw >> 12) & 0xF;
-    rn = (iw >> 16) & 0xF;
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        state->regs[rd] = state->regs[rn] + rm;
-    }else{
-	rm = iw & 0xF;
-        state->regs[rd] = state->regs[rn] + state->regs[rm];
-    }
-    if (rd != PC) {
-        state->regs[PC] = state->regs[PC] + 4;
-    }
-}
+    b_code = (iw >> 25) & 0b111;
 
-bool is_sub_inst(unsigned int iw)
-{
-    unsigned int op;
-    unsigned int opcode;
-
-    op = (iw >> 26) & 0b11;
-    opcode = (iw >> 21) & 0b1111;
-
-    return (op == 0) && (opcode == 0b0010);
-}
-
-void armemu_sub(struct arm_state *state)
-{
-    unsigned int iw;
-    unsigned int rd, rn, rm;
-
-    iw = *((unsigned int *) state->regs[PC]);
-
-    rd = (iw >> 12) & 0xF;
-    rn = (iw >> 16) & 0xF;
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        state->regs[rd] = state->regs[rn] - rm;
-    }else{
-        rm = iw & 0xF;
-        state->regs[rd] = state->regs[rn] - state->regs[rm];
-    }
-    if (rd != PC) {
-        state->regs[PC] = state->regs[PC] + 4;
-    }
-}
-
-bool is_cmp_inst(unsigned int iw)
-{
-    unsigned int op;
-    unsigned int opcode;
-
-    op = (iw >> 26) & 0b11;
-    opcode = (iw >> 21) & 0b1111;
-
-    return (op == 0) && (opcode == 0b1010);
-}
-
-void armemu_cmp(struct arm_state *state)
-{
-    unsigned int iw;
-    unsigned int rd, rn, rm;
-    int cond;
-
-    iw = *((unsigned int *) state->regs[PC]);
-
-    rd = (iw >> 12) & 0xF;
-    rn = (iw >> 16) & 0xF;
-
-    state->cpsr = 0;
-
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        cond = (int)(state->regs[rn] - rm);
-    }else{
-        rm = iw & 0xF;
-        cond = (int)(state->regs[rn] - state->regs[rm]);
-    }
-
-    if(cond == 0){
-        state->cpsr = state->cpsr | (0b0000 << 28);
-    }else if(cond < 0){
-        state->cpsr = state->cpsr | (0b1011 << 28);
-    }else if(cond > 0){
-        state->cpsr = state->cpsr | (0b1100 << 28);
-    }
-    if (rd != PC) {
-        state->regs[PC] = state->regs[PC] + 4;
-    }
-}
-
-bool is_mul_inst(unsigned int iw)
-{
-    unsigned int op;
-    unsigned int cmd;
-
-    op = (iw >> 26) & 0b11;
-    cmd = (iw >> 21) & 0b111;
-
-    return (op == 0) && (cmd == 0b000);
-}
-
-void armemu_mul(struct arm_state *state)
-{
-    unsigned int iw;
-    unsigned int rd, rn, rm;
-
-    iw = *((unsigned int *) state->regs[PC]);
-    rd = (iw >> 16) & 0xF;
-    rn = iw & 0xF;
-    rm = (iw >> 8) & 0xF;
-
-    state->regs[rd] = state->regs[rn] * state->regs[rm];
-    if (rd != PC) {
-        state->regs[PC] = state->regs[PC] + 4;
-    }
+    return (b_code == 0b101);
 }
 
 bool is_bx_inst(unsigned int iw)
@@ -250,6 +98,234 @@ bool is_bx_inst(unsigned int iw)
 
     return (bx_code == 0b000100101111111111110001);
 }
+
+
+//check if the instruction is for register or immediate value
+bool is_immediate(unsigned int iw)
+{
+    unsigned int immop;
+    immop = (iw >> 25) & 0b1;
+    return (immop == 1);
+}
+
+// bool is_mov_inst(unsigned int iw)
+// {
+//     unsigned int op;
+//     unsigned int opcode;
+
+//     op = (iw >> 26) & 0b11;
+//     opcode = (iw >> 21) & 0b1111;
+
+//     return (op == 0) && (opcode == 0b1101);
+// }
+
+void armemu_mov(struct arm_state *state, unsigned int iw, unsigned int rd)
+{
+    // unsigned int iw;
+    unsigned int op2;
+
+    // iw = *((unsigned int *) state->regs[PC]);
+
+    // rd = (iw >> 12) & 0xF;
+    if (is_immediate(iw)){
+        op2 = iw & 0xFF;
+        state->regs[rd] = op2;
+    }else{
+        op2 = iw & 0xF;
+        state->regs[rd] = state->regs[op2];
+    }
+    // if (rd != PC) {
+    //     state->regs[PC] = state->regs[PC] + 4;
+    // }
+}
+
+// bool is_add_inst(unsigned int iw)
+// {
+//     unsigned int op;
+//     unsigned int opcode;
+
+//     op = (iw >> 26) & 0b11;
+//     opcode = (iw >> 21) & 0b1111;
+
+//     return (op == 0) && (opcode == 0b0100);
+// }
+
+void armemu_add(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
+{
+    // unsigned int iw;
+    unsigned int rm;
+
+    iw = *((unsigned int *) state->regs[PC]);
+    
+    // rd = (iw >> 12) & 0xF;
+    // rn = (iw >> 16) & 0xF;
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        state->regs[rd] = state->regs[rn] + rm;
+    }else{
+    rm = iw & 0xF;
+        state->regs[rd] = state->regs[rn] + state->regs[rm];
+    }
+    // if (rd != PC) {
+    //     state->regs[PC] = state->regs[PC] + 4;
+    // }
+}
+
+// bool is_sub_inst(unsigned int iw)
+// {
+//     unsigned int op;
+//     unsigned int opcode;
+
+//     op = (iw >> 26) & 0b11;
+//     opcode = (iw >> 21) & 0b1111;
+
+//     return (op == 0) && (opcode == 0b0010);
+// }
+
+void armemu_sub(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
+{
+    // unsigned int iw;
+    unsigned int rm;
+
+    // iw = *((unsigned int *) state->regs[PC]);
+
+    // rd = (iw >> 12) & 0xF;
+    // rn = (iw >> 16) & 0xF;
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        state->regs[rd] = state->regs[rn] - rm;
+    }else{
+        rm = iw & 0xF;
+        state->regs[rd] = state->regs[rn] - state->regs[rm];
+    }
+    // if (rd != PC) {
+    //     state->regs[PC] = state->regs[PC] + 4;
+    // }
+}
+
+// bool is_cmp_inst(unsigned int iw)
+// {
+//     unsigned int op;
+//     unsigned int opcode;
+
+//     op = (iw >> 26) & 0b11;
+//     opcode = (iw >> 21) & 0b1111;
+
+//     return (op == 0) && (opcode == 0b1010);
+// }
+
+void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
+{
+    // unsigned int iw;
+    unsigned int rm;
+    unsigned int cond;
+
+    // iw = *((unsigned int *) state->regs[PC]);
+
+    // rd = (iw >> 12) & 0xF;
+    // rn = (iw >> 16) & 0xF;
+
+    state->cpsr = 0;
+
+    if (is_immediate(iw)){
+        rm = iw & 0xFF;
+        cond = (unsigned int)(state->regs[rn] - rm);
+    }else{
+        rm = iw & 0xF;
+        cond = (unsigned int)(state->regs[rn] - state->regs[rm]);
+    }
+
+    if(cond == 0){
+        state->cpsr = state->cpsr | (0b0000 << 28);
+    }else if(cond < 0){
+        state->cpsr = state->cpsr | (0b1011 << 28);
+    }else if(cond > 0){
+        state->cpsr = state->cpsr | (0b1100 << 28);
+    }
+    // if (rd != PC) {
+    //     state->regs[PC] = state->regs[PC] + 4;
+    // }
+}
+
+bool is_mul_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int accumu;
+
+    op = (iw >> 26) & 0b11;
+    accumu = (iw >> 21) & 0b111;
+
+    return (op == 0) && (accumu == 0b000);
+}
+
+void armemu_mul(struct arm_state *state, unsigned int iw)
+{
+    // unsigned int iw;
+    unsigned int rd, rn, rm;
+
+    // iw = *((unsigned int *) state->regs[PC]);
+    rd = (iw >> 16) & 0xF;
+    rn = (iw >> 12) & 0xF;
+    rm = iw & 0xF;
+    
+    state->regs[rd] = state->regs[rn] * state->regs[rm];
+    if (rd != PC) {
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
+void armemu_data(struct arm_state *state, unsigned int iw)
+{
+    unsigned int rd, rn;
+    unsigned int opcode;
+
+    rd = (iw >> 12) & 0xF;
+    rn = (iw >> 16) & 0xF;
+    iw = *((unsigned int *) state->regs[PC]);
+    opcode = (iw >> 21) & 0xF;
+    
+    if(opcode == 0b1101){
+        armemu_mov(state, iw, rd);
+    }else if(opcode == 0b0100){
+        armemu_add(state, iw, rd, rn);
+    }else if(opcode == 0b0010){
+        armemu_sub(state, iw, rd, rn);
+    }else if(opcode == 0b1010){
+        armemu_cmp(state, iw, rd, rn);
+    }
+
+    if(rd != PC){
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
+// bool is_b_inst(unsigned int iw)
+// {
+//     unsigned int b_code;
+
+//     b_code = (iw >> 25) & 0b111;
+
+//     return (b_code == 0b101);
+// }
+
+void armemu_b(struct arm_state *state)
+{
+    unsigned int iw;
+    unsigned int offset;
+
+    iw = *((unsigned int *) state->regs[PC]);
+    offset = iw & 0xFFFFFF;
+
+}
+
+// bool is_bx_inst(unsigned int iw)
+// {
+//     unsigned int bx_code;
+
+//     bx_code = (iw >> 4) & 0x00FFFFFF;
+
+//     return (bx_code == 0b000100101111111111110001);
+// }
 
 void armemu_bx(struct arm_state *state)
 {
@@ -270,14 +346,10 @@ void armemu_one(struct arm_state *state)
 
     if (is_bx_inst(iw)) {
         armemu_bx(state);
-    } else if (is_add_inst(iw)) {
-        armemu_add(state);
-    } else if (is_sub_inst(iw)) {
-	armemu_sub(state);
-    } else if (is_mov_inst(iw)) {
-	armemu_mov(state);
-    } else if (is_mul_inst(iw)) {
-        armemu_mul(state);
+    } else if (is_data_inst(iw)) {
+        armemu_data(state, iw);
+    } else if (is_mul_inst){
+        armemu_mul(state, iw);
     }
 }
 
@@ -321,19 +393,14 @@ int main(int argc, char **argv)
     r = armemu(&state);
     printf("armemu(mov_a(1,2)) = %d\n", r);
 
-    /* Emulate mul_a.s */
-    arm_state_init(&state, (unsigned int *) mul_a, 2, 3, 0, 0);
-    arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(mul_a(2,3)) = %d\n", r);  
-
     /* Emulate cmp_a.s */
     arm_state_init(&state, (unsigned int *) cmp_a, 1, 2, 0, 0);
-    arm_state_print(&state);
+    //arm_state_print(&state);
     r = armemu(&state);
     printf("armemu(cmp_a(1,2)) = %d\n", r);
-
+    arm_state_print(&state);
 
     return 0;
 
 }
+
