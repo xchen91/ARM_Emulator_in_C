@@ -313,14 +313,14 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
 
     if ((iw >> 20) & 0b1 == 1){ //load
         if((iw >> 22) & 0b1 == 1){ // ldrb
-            target = *(unsigned char*)(state->regs[rn] + offset);
+            target = *((unsigned char*)(state->regs[rn] + offset));
         }else{ //ldr
-            target = *(unsigned int*)(state->regs[rn] + offset);
+            target = *((unsigned int*)(state->regs[rn] + offset));
         }
         state->regs[rd] = target;
     }else{ //str
         target = state->regs[rd];
-        *(unsigned int*)(state->regs[rn] + offset) = target;
+        *((unsigned int*)(state->regs[rn] + offset)) = target;
     }
 
     if(rd != PC){
