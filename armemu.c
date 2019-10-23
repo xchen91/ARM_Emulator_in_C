@@ -338,6 +338,35 @@ void armemu_bx(struct arm_state *state)
     state->regs[PC] = state->regs[rn];
 }
 
+void armemu_memory(struct arm_state *state, unsigned int iw)
+{
+    unsigned int rd, rn, rm, offset;
+
+    rd = (iw >> 12) & 0xF;
+    rn = (iw >> 16) & 0xF;
+
+    if (is_immediate(iw)){
+        rm = iw & 0xF;
+        offset = state->regs[rm];
+    }else{
+        offset = iw & 0xFFF;
+    }
+
+    if ((iw >> 20) & 0b1 == 1){ //load
+        if((iw >> 22) & 0b1 == 1){ // ldrb
+            state->regs[rd] = *(unsigned char)(state->regs[rn] + offset);
+        }else{ //ldr
+            state->regs[rd] = *(unsigned int)(state->regs[rn] + offset);
+        }
+    }else{ //str
+        *(unsigned int)(state->regs[rn] + offset) = state->regs[rd];
+    }
+
+    if(rd != PC){
+        state->regs[PC] = state->regs[PC] + 4;
+    }
+}
+
 void armemu_one(struct arm_state *state)
 {
     unsigned int iw;
@@ -348,7 +377,7 @@ void armemu_one(struct arm_state *state)
         armemu_bx(state);
     } else if (is_data_inst(iw)) {
         armemu_data(state, iw);
-    } else if (is_mul_inst){
+    } else if (is_mul_inst(iw)){
         armemu_mul(state, iw);
     }
 }
