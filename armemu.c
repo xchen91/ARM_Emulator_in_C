@@ -14,6 +14,7 @@ int mov_a(int a, int b);
 int sub_a(int a, int b);
 int cmp_a(int a, int b);
 int ldr_a(int a, int b);
+int str_a(int a, int b);
 
 /* The complete machine state */
 struct arm_state {
@@ -414,6 +415,13 @@ int main(int argc, char **argv)
     //arm_state_print(&state);
     r = armemu(&state);
     printf("armemu(ldr_a(1,2)) = %d\n", r);
+    arm_state_print(&state);
+
+    /* Emulate str_a.s */
+    arm_state_init(&state, (unsigned int *) str_a, 1, arr, 0, 0);
+    //arm_state_print(&state);
+    r = armemu(&state);
+    printf("armemu(str_a(1,2)) = %d\n", r);
     arm_state_print(&state);
     return 0;
 
