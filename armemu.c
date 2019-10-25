@@ -312,13 +312,13 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
         offset = iw & 0xFFF;
     }
     //check u
-    if((iw >>23) & 0b1 == 1){
+    if((iw >> 23) & 0b1 == 1){
         target = state->regs[rn] + offset;
     }else{
         target = state->regs[rn] - offset;
     }
-
-    //
+    printf("target = %d\n", target);
+    //check l
     if ((iw >> 20) & 0b1 == 1){ //load
 	//if((iw >> 23) & 0b1 == 1){ //add
 	   // target = state->regs[rn] + offset;
