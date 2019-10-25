@@ -303,24 +303,40 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
  
     rd = (iw >> 12) & 0xF;
     rn = (iw >> 16) & 0xF;
-
+    //check i
     if (is_immediate(iw)){
         rm = iw & 0xF;
         offset = state->regs[rm]; 
     }else{
         offset = iw & 0xFFF;
     }
+    //check u
+    if((iw >>23) & 0b1 == 1){
+        target = state->regs[rn] + offset;
+    }else{
+        target = state->regs[rn] - offset;
+    }
 
+    //
     if ((iw >> 20) & 0b1 == 1){ //load
+	//if((iw >> 23) & 0b1 == 1){ //add
+	   // target = state->regs[rn] + offset;
+	//}else{ //substract
+	   // target = state->regs[rn] - offset;
+        //}
         if((iw >> 22) & 0b1 == 1){ // ldrb
-            target = *((unsigned char*)(state->regs[rn] + offset));
+            state->regs[rd] = *((unsigned char*)target);
         }else{ //ldr
-            target = *((unsigned int*)(state->regs[rn] + offset));
+            state->regs[rd] = *((unsigned int*)target);
         }
-        state->regs[rd] = target;
     }else{ //str
-        target = state->regs[rd];
-        *((unsigned int*)(state->regs[rn] + offset)) = target;
+	if((iw >> 22) & 0b1 == 1){ //strb
+	    *((unsigned char*)target) = state->regs[rd];
+        }else{ //str
+	    *((unsigned int*)target) = state->regs[rd];
+        }
+        //target = state->regs[rd];
+        //*((unsigned int*)(state->regs[rn] + offset)) = target;
     }
 
     if(rd != PC){
@@ -392,8 +408,9 @@ int main(int argc, char **argv)
     printf("armemu(cmp_a(1,2)) = %d\n", r);
     arm_state_print(&state);
 
+    int arr[5]={99999,2,3,4,5};
     /* Emulate ldr_a.s */
-    arm_state_init(&state, (unsigned int *) ldr_a, 1, 2, 0, 0);
+    arm_state_init(&state, (unsigned int *) ldr_a, 2, arr, 0, 0);
     //arm_state_print(&state);
     r = armemu(&state);
     printf("armemu(ldr_a(1,2)) = %d\n", r);
