@@ -272,13 +272,14 @@ void armemu_data(struct arm_state *state, unsigned int iw)
 void armemu_b(struct arm_state *state)
 {
     unsigned int iw;
+    unsigned cond;
     unsigned int offset;
 
     iw = *((unsigned int *) state->regs[PC]);
     offset = iw & 0xFFFFFF;
 
     if((iw >> 24) & 0b1 == 1){ //bl
-        state->regs[LR] = state->regs[PC];
+        state->regs[LR] = state->regs[PC] + 4;//return to the next instruction after bl 
     }
     //b
     if((iw >> 23) & 0b1 == 1){ //offset<0
@@ -286,8 +287,8 @@ void armemu_b(struct arm_state *state)
         offset = - offset;
     }
     //offset>=0
+    offset = offset * 4;
     state->regs[PC] = state->regs[PC] + (8 + offset);
-
 }
 
 void armemu_bx(struct arm_state *state)
