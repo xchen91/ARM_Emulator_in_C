@@ -276,16 +276,19 @@ void armemu_b(struct arm_state *state)
 
     iw = *((unsigned int *) state->regs[PC]);
     offset = iw & 0xFFFFFF;
+
+    if((iw >> 24) & 0b1 == 1){ //bl
+        state->regs[LR] = state->regs[PC];
+    }
+    //b
+    if((iw >> 23) & 0b1 == 1){ //offset<0
+        offset = ~ offset + 1;
+        offset = - offset;
+    }
+    //offset>=0
+    state->regs[PC] = state->regs[PC] + (8 + offset);
+
 }
-
-// bool is_bx_inst(unsigned int iw)
-// {
-//     unsigned int bx_code;
-
-//     bx_code = (iw >> 4) & 0x00FFFFFF;
-
-//     return (bx_code == 0b000100101111111111110001);
-// }
 
 void armemu_bx(struct arm_state *state)
 {
