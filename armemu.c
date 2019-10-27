@@ -243,23 +243,29 @@ void armemu_mul(struct arm_state *state, unsigned int iw)
         state->regs[PC] = state->regs[PC] + 4;
     }
 }
-
+ 
 void armemu_data(struct arm_state *state, unsigned int iw)
 {
-    unsigned int rd, rn;
-    unsigned int opcode;
+    unsigned int rd, rn, rm, imm;
+    unsigned int immediate, opcode, op3;
 
-    rd = (iw >> 12) & 0xF;
     rn = (iw >> 16) & 0xF;
+    rd = (iw >> 12) & 0xF;
+    rm = iw & 0xF;
+    imm = iw & 0xFF;
+
+    immediate = (iw >> 25) & 0xF; // 1->true, 0->false
     iw = *((unsigned int *) state->regs[PC]);
     opcode = (iw >> 21) & 0xF;
-    
+
+    //check immediate
+    op3 = immediate ? imm : state->regs[rm];
     if(opcode == 0b1101){
-        armemu_mov(state, iw, rd);
+        state->regs[rd] = op3;
     }else if(opcode == 0b0100){
-        armemu_add(state, iw, rd, rn);
+        state->regs[rd] = state->regs[rn] + op3;
     }else if(opcode == 0b0010){
-        armemu_sub(state, iw, rd, rn);
+        state->regs[rd] = state->regs[rn] - op3;
     }else if(opcode == 0b1010){
         armemu_cmp(state, iw, rd, rn);
     }
