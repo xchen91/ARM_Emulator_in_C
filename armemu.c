@@ -119,27 +119,35 @@ bool is_immediate(unsigned int iw)
     return (immop == 1);
 }
 
-void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
+void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsigned int op3)
 {
-    unsigned int rm;
-    unsigned int cond;
-
     state->cpsr = 0;
+    int rns, op3s, result;
+    long long rnl, op3l;
 
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        cond = (unsigned int)(state->regs[rn] - rm);
-    }else{
-        rm = iw & 0xF;
-        cond = (unsigned int)(state->regs[rn] - state->regs[rm]);
-    }
+    rns = (int) rn;
+    op3s = (int) op3;
+    rnl = (long long) rn;
+    op3l = (long long) op3;
 
-    if(cond == 0){
-        state->cpsr = state->cpsr | (0b0000 << 28);
-    }else if(cond < 0){
-        state->cpsr = state->cpsr | (0b1011 << 28);
-    }else if(cond > 0){
-        state->cpsr = state->cpsr | (0b1100 << 28);
+    result = rns - op3s;
+
+    state->cpsr = (result < 0) ? (state->cpsr | (0b0 << 31)) : (state->cpsr | (0b1 << 31));
+    state->cpsr = (result == 0) ? (state->cpsr | (0b0 << 30)) : (state->cpsr | (0b1 << 30));
+    state->cpsr = (op3 > rn) ? (state->cpsr | (0b0 << 29)) : (state->cpsr | (0b1 << 29));
+    state->cpsr = state->cpsr | (0b0 << 28);
+    // (state->cpsr >> 31) & 0b1 = (result < 0); //cpsr->N
+    // (state->cpsr >> 30) & 0b1 = (resul == 0); //cpsr->Z
+    // (state->cpsr >> 29) & 0b1 = (op3 > rn);   //cpsr->C
+    // (state->cpsr >> 28) & 0b1 = 0;            //cpsr->V
+    if((rns > 0) && (op3s < 0)){
+        if((rnl + op3l) > 0x7FFFFFFF){
+            state->cpsr = state->cpsr | (0b1 << 28);
+        }
+    }else if((rns < 0) && (op3s > 0)){
+        if((rnl + op3l) > 0x80000000){
+            state->cpsr = state->cpsr | (0b1 << 28);
+        }
     }
 }
 
@@ -180,7 +188,7 @@ void armemu_data(struct arm_state *state, unsigned int iw)
     }else if(opcode == 0b0010){
         state->regs[rd] = state->regs[rn] - op3;
     }else if(opcode == 0b1010){
-        armemu_cmp(state, iw, rd, rn);
+        armemu_cmp(state, iw, rn, op3); 
     }
 
     if(rd != PC){
