@@ -299,8 +299,8 @@ void armemu_b(struct arm_state *state)
                 offset = offset * 4;
                 state->regs[PC] = state->regs[PC] + (8 + offset);
             }
-        }else if{
-            state->regs[PC] = state->[PC] + 4;
+        }else{
+            state->regs[PC] = state->regs[PC] + 4;
         }
     }else{ //cond is ignored, instruction always execute: bl, b
         if((iw >> 24) & 0b1 == 1){ //bl
@@ -453,7 +453,7 @@ int main(int argc, char **argv)
     arm_state_init(&state, (unsigned int *) str_a, 1, arr, 0, 0);
     //arm_state_print(&state);
     r = armemu(&state);
-    printf("armemu(str_a(1,2)) = %d\n", r);
+    printf("armemu(str_a(1,2)) = %d\n", arr[0]);
     arm_state_print(&state);
     return 0;
 
