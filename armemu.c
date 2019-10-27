@@ -76,6 +76,15 @@ bool is_data_inst(unsigned int iw)
     return (op == 00);
 }
 
+bool is_mul_inst(unsigned int iw)
+{
+    unsigned int op;
+    unsigned int accumu;
+    op = (iw >> 26) & 0b11;
+    accumu = (iw >> 21) & 0b111;
+    return (op == 00) && (accumu == 0b000);
+}
+
 bool is_memory_inst(unsigned int iw)
 {
     unsigned int op;
@@ -110,91 +119,6 @@ bool is_immediate(unsigned int iw)
     return (immop == 1);
 }
 
-// bool is_mov_inst(unsigned int iw)
-// {
-//     unsigned int op;
-//     unsigned int opcode;
-
-//     op = (iw >> 26) & 0b11;
-//     opcode = (iw >> 21) & 0b1111;
-
-//     return (op == 0) && (opcode == 0b1101);
-// }
-
-void armemu_mov(struct arm_state *state, unsigned int iw, unsigned int rd)
-{
-    unsigned int op2;
-
-    if (is_immediate(iw)){
-        op2 = iw & 0xFF;
-        state->regs[rd] = op2;
-    }else{
-        op2 = iw & 0xF;
-        state->regs[rd] = state->regs[op2];
-    }
-}
-
-// bool is_add_inst(unsigned int iw)
-// {
-//     unsigned int op;
-//     unsigned int opcode;
-
-//     op = (iw >> 26) & 0b11;
-//     opcode = (iw >> 21) & 0b1111;
-
-//     return (op == 0) && (opcode == 0b0100);
-// }
-
-void armemu_add(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
-{
-    unsigned int rm;
-
-    iw = *((unsigned int *) state->regs[PC]);
-    
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        state->regs[rd] = state->regs[rn] + rm;
-    }else{
-    rm = iw & 0xF;
-        state->regs[rd] = state->regs[rn] + state->regs[rm];
-    }
-}
-
-// bool is_sub_inst(unsigned int iw)
-// {
-//     unsigned int op;
-//     unsigned int opcode;
-
-//     op = (iw >> 26) & 0b11;
-//     opcode = (iw >> 21) & 0b1111;
-
-//     return (op == 0) && (opcode == 0b0010);
-// }
-
-void armemu_sub(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
-{
-    unsigned int rm;
-
-    if (is_immediate(iw)){
-        rm = iw & 0xFF;
-        state->regs[rd] = state->regs[rn] - rm;
-    }else{
-        rm = iw & 0xF;
-        state->regs[rd] = state->regs[rn] - state->regs[rm];
-    }
-}
-
-// bool is_cmp_inst(unsigned int iw)
-// {
-//     unsigned int op;
-//     unsigned int opcode;
-
-//     op = (iw >> 26) & 0b11;
-//     opcode = (iw >> 21) & 0b1111;
-
-//     return (op == 0) && (opcode == 0b1010);
-// }
-
 void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rd, unsigned int rn)
 {
     unsigned int rm;
@@ -217,17 +141,6 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rd, unsig
     }else if(cond > 0){
         state->cpsr = state->cpsr | (0b1100 << 28);
     }
-}
-
-bool is_mul_inst(unsigned int iw)
-{
-    unsigned int op;
-    unsigned int accumu;
-
-    op = (iw >> 26) & 0b11;
-    accumu = (iw >> 21) & 0b111;
-
-    return (op == 0) && (accumu == 0b000);
 }
 
 void armemu_mul(struct arm_state *state, unsigned int iw)
