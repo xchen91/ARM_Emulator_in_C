@@ -8,6 +8,7 @@
 #define PC 15
 
 /* Assembly functions to emulate */
+/*
 int add_a(int a, int b);
 int add2_a(int a, int b);
 int mov_a(int a, int b);
@@ -15,7 +16,9 @@ int sub_a(int a, int b);
 int cmp_a(int a, int b);
 int ldr_a(int a, int b);
 int str_a(int a, int b);
-int test_a(int a, int b);
+*/
+int test_a();
+int sum_array_a();
 
 /* The complete machine state */
 struct arm_state {
@@ -343,11 +346,27 @@ int main(int argc, char **argv)
 {
     struct arm_state state;
     unsigned int r;
+    int arr[5] = {1,2,3,4,5};
+
     arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
     //arm_state_print(&state);
     r = armemu(&state);
-    printf("r0 = %d\n", r);
+    printf("quadratic = %d\n", r);
     arm_state_print(&state);
+    
+    /* sum_array_a.s */
+   
+    arm_state_init(&state, (unsigned int *) sum_array_a, arr, 5, 0, 0);
+    //arm_state_print(&state);
+    r = armemu(&state);
+    printf("sum_array = %d\n", r);
+    arm_state_print(&state);
+    
+    
+    
+    
     return 0;
+
+
 
 }
