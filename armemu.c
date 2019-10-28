@@ -15,6 +15,7 @@ int sub_a(int a, int b);
 int cmp_a(int a, int b);
 int ldr_a(int a, int b);
 int str_a(int a, int b);
+int test_a(int a, int b);
 
 /* The complete machine state */
 struct arm_state {
@@ -78,6 +79,13 @@ bool is_data_inst(unsigned int iw)
 
 bool is_mul_inst(unsigned int iw)
 {
+    /*
+    unsigned int op;
+    unsigned int op2;
+    op = (iw >> 4) & 0xF;
+    op2 = (iw >> 22) & 0b111111;
+    return (op == 0b1001) && (accumu == 0b000000);
+    */
     unsigned int op;
     unsigned int accumu;
     op = (iw >> 26) & 0b11;
@@ -132,9 +140,9 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
 
     result = rns - op3s;
 
-    state->cpsr = (result < 0) ? (state->cpsr | (0b0 << 31)) : (state->cpsr | (0b1 << 31));
-    state->cpsr = (result == 0) ? (state->cpsr | (0b0 << 30)) : (state->cpsr | (0b1 << 30));
-    state->cpsr = (op3 > rn) ? (state->cpsr | (0b0 << 29)) : (state->cpsr | (0b1 << 29));
+    state->cpsr = (result < 0) ? (state->cpsr | (0b1 << 31)) : (state->cpsr | (0b0 << 31));
+    state->cpsr = (result == 0) ? (state->cpsr | (0b1 << 30)) : (state->cpsr | (0b0 << 30));
+    state->cpsr = (op3 > rn) ? (state->cpsr | (0b1 << 29)) : (state->cpsr | (0b0 << 29));
     state->cpsr = state->cpsr | (0b0 << 28);
     // (state->cpsr >> 31) & 0b1 = (result < 0); //cpsr->N
     // (state->cpsr >> 30) & 0b1 = (resul == 0); //cpsr->Z
@@ -153,13 +161,13 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
 
 void armemu_mul(struct arm_state *state, unsigned int iw)
 {
-    unsigned int rd, rn, rm;
+    unsigned int rd, rs, rm;
 
     rd = (iw >> 16) & 0xF;
-    rn = (iw >> 12) & 0xF;
+    rs = (iw >> 8) & 0xF;
     rm = iw & 0xF;
     
-    state->regs[rd] = state->regs[rn] * state->regs[rm];
+    state->regs[rd] = state->regs[rs] * state->regs[rm];
     if (rd != PC) {
         state->regs[PC] = state->regs[PC] + 4;
     }
@@ -176,7 +184,6 @@ void armemu_data(struct arm_state *state, unsigned int iw)
     imm = iw & 0xFF;
 
     immediate = (iw >> 25) & 0xF; // 1->true, 0->false
-    iw = *((unsigned int *) state->regs[PC]);
     opcode = (iw >> 21) & 0xF;
 
     //check immediate
@@ -312,10 +319,10 @@ void armemu_one(struct arm_state *state)
 
     if (is_bx_inst(iw)) {
         armemu_bx(state);
-    } else if (is_data_inst(iw)) {
-        armemu_data(state, iw);
     } else if (is_mul_inst(iw)){
         armemu_mul(state, iw);
+    } else if (is_data_inst(iw)) {
+        armemu_data(state, iw);
     } else if (is_memory_inst(iw)){
         armemu_memory(state, iw);
     }
@@ -336,51 +343,10 @@ int main(int argc, char **argv)
 {
     struct arm_state state;
     unsigned int r;
-
-    /* Emulate add_a */
-    arm_state_init(&state, (unsigned int *) add_a, 1, 2, 0, 0);
-    arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(add_a(1,2)) = %d\n", r);
-
-    /* Emulate add2_a */
-    arm_state_init(&state, (unsigned int *) add2_a, 1, 2, 0, 0);
-    arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(add2_a(1,2)) = %d\n", r);
-
-    /* Emulate sub_a */
-    arm_state_init(&state, (unsigned int *) sub_a, 3, 2, 0, 0);
-    arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(sub_a(3,2)) = %d\n", r);
-
-    /* Emulate mov_a.s */
-    arm_state_init(&state, (unsigned int *) mov_a, 1, 2, 0, 0);
-    arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(mov_a(1,2)) = %d\n", r);
-
-    /* Emulate cmp_a.s */
-    arm_state_init(&state, (unsigned int *) cmp_a, 1, 2, 0, 0);
+    arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
     //arm_state_print(&state);
     r = armemu(&state);
-    printf("armemu(cmp_a(1,2)) = %d\n", r);
-    arm_state_print(&state);
-
-    int arr[5]={99999,2,3,4,5};
-    /* Emulate ldr_a.s */
-    arm_state_init(&state, (unsigned int *) ldr_a, 2, arr, 0, 0);
-    //arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(ldr_a(1,2)) = %d\n", r);
-    arm_state_print(&state);
-
-    /* Emulate str_a.s */
-    arm_state_init(&state, (unsigned int *) str_a, 1, arr, 0, 0);
-    //arm_state_print(&state);
-    r = armemu(&state);
-    printf("armemu(str_a(1,2)) = %d\n", arr[0]);
+    printf("r0 = %d\n", r);
     arm_state_print(&state);
     return 0;
 
