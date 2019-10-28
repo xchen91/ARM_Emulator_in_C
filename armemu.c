@@ -142,15 +142,45 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
     op3l = (long long) op3;
 
     result = rns - op3s;
-
+    //set N and Z
+    if(result < 0){
+        state->cpsr = state->cpsr | 0x80000000; //N = 1    1000
+        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
+    }else if(result = 0){
+        state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
+        state->cpsr = state->cpsr | 0x40000000; //Z = 1    0100
+    }else{
+        state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
+        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
+    }
+    //set C
+    if(op3 > rn){
+        state->cpsr = state->cpsr | 0x20000000; //C = 1    0010
+    }else{
+        state->cpsr = state->cpsr & 0xDFFFFFFF; //C = 0    1101
+    }
+    //set V
+    state->cpsr = state->cpsr & 0xEFFFFFFF; //V = 0    1110
+    if((rns > 0) && (op3s < 0)){
+        if((rnl + op3l) > 0x7FFFFFFF){
+            state->cpsr = state->cpsr | 0x1FFFFFFF; //V = 1    0001
+        }
+    }else if((rns < 0) && (op3s > 0)){
+        if((rnl + op3l) > 0x80000000){
+            state->cpsr = state->cpsr | 0x1FFFFFFF; //V = 1    0001
+        }
+    }
+/*
     state->cpsr = (result < 0) ? (state->cpsr | (0b1 << 31)) : (state->cpsr | (0b0 << 31));
     state->cpsr = (result == 0) ? (state->cpsr | (0b1 << 30)) : (state->cpsr | (0b0 << 30));
     state->cpsr = (op3 > rn) ? (state->cpsr | (0b1 << 29)) : (state->cpsr | (0b0 << 29));
     state->cpsr = state->cpsr | (0b0 << 28);
+*/
     // (state->cpsr >> 31) & 0b1 = (result < 0); //cpsr->N
     // (state->cpsr >> 30) & 0b1 = (resul == 0); //cpsr->Z
     // (state->cpsr >> 29) & 0b1 = (op3 > rn);   //cpsr->C
     // (state->cpsr >> 28) & 0b1 = 0;            //cpsr->V
+    /*
     if((rns > 0) && (op3s < 0)){
         if((rnl + op3l) > 0x7FFFFFFF){
             state->cpsr = state->cpsr | (0b1 << 28);
@@ -160,6 +190,7 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
             state->cpsr = state->cpsr | (0b1 << 28);
         }
     }
+    */
 }
 
 void armemu_mul(struct arm_state *state, unsigned int iw)
