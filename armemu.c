@@ -19,6 +19,7 @@ int str_a(int a, int b);
 */
 int test_a();
 int sum_array_a();
+int cmp_a();
 
 /* The complete machine state */
 struct arm_state {
@@ -142,11 +143,23 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
     op3l = (long long) op3;
 
     result = rns - op3s;
-
+    //set N and Z
+    if(result < 0){
+        state->cpsr = state->cpsr | 0x80000000; //N = 1    1000
+        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
+    }else if(result = 0){
+        state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
+        state->cpsr = state->cpsr | 0x40000000; //Z = 1    0100
+    }else{
+        state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
+        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
+    }
+/*
     state->cpsr = (result < 0) ? (state->cpsr | (0b1 << 31)) : (state->cpsr | (0b0 << 31));
     state->cpsr = (result == 0) ? (state->cpsr | (0b1 << 30)) : (state->cpsr | (0b0 << 30));
     state->cpsr = (op3 > rn) ? (state->cpsr | (0b1 << 29)) : (state->cpsr | (0b0 << 29));
     state->cpsr = state->cpsr | (0b0 << 28);
+*/
     // (state->cpsr >> 31) & 0b1 = (result < 0); //cpsr->N
     // (state->cpsr >> 30) & 0b1 = (resul == 0); //cpsr->Z
     // (state->cpsr >> 29) & 0b1 = (op3 > rn);   //cpsr->C
@@ -354,17 +367,27 @@ int main(int argc, char **argv)
     printf("quadratic = %d\n", r);
     arm_state_print(&state);
     
-    /* sum_array_a.s */
-   
+    /* sum_array_a.s 
     arm_state_init(&state, (unsigned int *) sum_array_a, arr, 5, 0, 0);
     //arm_state_print(&state);
     r = armemu(&state);
     printf("sum_array = %d\n", r);
     arm_state_print(&state);
     
-    
-    
-    
+    */
+
+
+    arm_state_init(&state, (unsigned int *) cmp_a, 3, 2, 0, 0);
+    r = armemu(&state);
+    printf("cmp(3,2) = %d\n", r);
+    arm_state_print(&state);
+
+    arm_state_init(&state, (unsigned int *) cmp_a, 2, 2, 0, 0);
+    r = armemu(&state);
+    printf("cmp(2,2) = %d\n", r);
+    arm_state_print(&state);
+
+
     return 0;
 
 
