@@ -186,7 +186,7 @@ void armemu_data(struct arm_state *state, unsigned int iw)
     rm = iw & 0xF;
     imm = iw & 0xFF;
 
-    immediate = (iw >> 25) & 0xF; // 1->true, 0->false
+    immediate = (iw >> 25) & 0b1; // 1->true, 0->false
     opcode = (iw >> 21) & 0xF;
 
     //check immediate
