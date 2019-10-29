@@ -154,7 +154,6 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
         state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
         state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
     }
-<<<<<<< HEAD
     //set C
     if(op3 > rn){
         state->cpsr = state->cpsr | 0x20000000; //C = 1    0010
@@ -172,8 +171,6 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
             state->cpsr = state->cpsr | 0x1FFFFFFF; //V = 1    0001
         }
     }
-=======
->>>>>>> 3d4b8a5e66f5e08cc4839bbb048174fa89e2c31e
 /*
     state->cpsr = (result < 0) ? (state->cpsr | (0b1 << 31)) : (state->cpsr | (0b0 << 31));
     state->cpsr = (result == 0) ? (state->cpsr | (0b1 << 30)) : (state->cpsr | (0b0 << 30));
