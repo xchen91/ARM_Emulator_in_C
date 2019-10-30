@@ -20,6 +20,7 @@ int str_a(int a, int b);
 //int test_a();
 //int sum_array_a();
 int cmp_a();
+int test_b_a();
 
 /* The complete machine state */
 struct arm_state {
@@ -92,7 +93,7 @@ void arm_state_print(struct arm_state *as)
     } 
 }
 
-bool is_data_inst(unsigned int iw)
+bool is_dp_inst(unsigned int iw)
 {
     unsigned int op;
     op = (iw >> 26) & 0b11;
@@ -108,7 +109,7 @@ bool is_mul_inst(unsigned int iw)
     return (op == 0b00) && (accumu == 0b000);
 }
 
-bool is_memory_inst(unsigned int iw)
+bool is_mem_inst(unsigned int iw)
 {
     unsigned int op;
     op = (iw >> 26) & 0b11;
@@ -142,7 +143,7 @@ bool is_immediate(unsigned int iw)
 }
 */
 //Set N,Z,C,V flags in cpsr_state
-void armemu_cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
+void armemu_cmp(struct arm_state *state, struct cpsr_state *cpsr, unsigned int rd, unsigned int a, unsigned int b) {
     int as, bs, result;
     long long al, bl;
 
@@ -183,7 +184,7 @@ void armemu_mul(struct arm_state *state, unsigned int iw)
     }
 }
  
-void armemu_data(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
+void armemu_dp(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 {
     unsigned int rd, rn, rm, imm;
     unsigned int immediate, opcode, op3;
@@ -206,24 +207,72 @@ void armemu_data(struct arm_state *state, struct cpsr_state *cpsr, unsigned int 
         state->regs[rd] = state->regs[rn] - op3;
     }else if(opcode == 0b1010){
         //armemu_cmp(state, iw, rn, op3); 
-	armemu_cmp(cpsr, state->regs[rn], op3);
+	armemu_cmp(state, cpsr, rd, state->regs[rn], op3);
     }
 
     if(rd != PC){
         state->regs[PC] = state->regs[PC] + 4;
     }
 }
-/*
-void armemu_b(struct arm_state *state)
+
+void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 {
-    unsigned int iw;
+    printf("branch\n");
+
     unsigned int cond;
     unsigned int offset;
-
-    iw = *((unsigned int *) state->regs[PC]);
+ 
     offset = iw & 0xFFFFFF;
     cond = (iw >> 28) & 0xF;
+    printf("cond= %d\n", cond);
+    //sign-extention
+    if((iw >> 23) & 0b1 == 1){ //offset < 0
+        offset = offset | 0xFF000000; 
+    }
+    offset = offset * 4;
+    
+    if(cond == 0b1110){ //cond is ignored : b and bl
+    	if((iw >> 24) & 0b1 == 1){ //bl
+            state->regs[LR] = state->regs[PC] + 4;//return to the next instruction after bl  
+	}else{ //b 
+	    state->regs[PC] = state->regs[PC] + (8 + offset);
+	    printf("b\n");
 
+	}
+	
+    }else{
+	//beq
+    	if(cond == 0b0000){ 
+	    if(cpsr->Z == 1){
+		printf("beq\n");
+	        state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+                state->regs[PC] = state->regs[PC] + 4;
+	    }
+	//bne
+	}else if(cond == 0b0001){
+	    if(cpsr->Z == 0){
+	        state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+	        state->regs[PC] = state->regs[PC] + 4;
+	    }
+	//bgt
+	}else if(cond == 0b1100){
+	    if((cpsr->Z == 0) && (cpsr->N == cpsr->V)){
+	        state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+	        state->regs[PC] = state->regs[PC] + 4;
+	    }
+	//blt
+	}else if(cond == 0b1011){
+	    if(cpsr->N != cpsr->V){
+	        state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+	        state->regs[PC] = state->regs[PC] + 4;
+	    }
+	}
+    }
+    /*
     if(cond != 0b1110){ //check if cond is ignored
         if(cond == ((state->cpsr) >> 28 & 0xF)){ //check cond matches cpsr
             if (cond == 0b0000){ //beq
@@ -260,10 +309,9 @@ void armemu_b(struct arm_state *state)
         offset = offset * 4;
         state->regs[PC] = state->regs[PC] + (8 + offset);
     }
-        
-    
+    */
 }
-*/
+
 
 void armemu_bx(struct arm_state *state)
 {
@@ -275,8 +323,8 @@ void armemu_bx(struct arm_state *state)
 
     state->regs[PC] = state->regs[rn];
 }
-
-void armemu_memory(struct arm_state *state, unsigned int iw)
+/*
+void armemu_mem(struct arm_state *state, unsigned int iw)
 {
     unsigned int rd, rn, rm, offset, target;
  
@@ -315,7 +363,7 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
         state->regs[PC] = state->regs[PC] + 4;
     }
 }
-
+*/
 void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
 {
     unsigned int iw;
@@ -326,10 +374,10 @@ void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
         armemu_bx(state);
     } else if (is_mul_inst(iw)){
         armemu_mul(state, iw);
-    } else if (is_data_inst(iw)) {
-        armemu_data(state, cpsr, iw);
-    } else if (is_memory_inst(iw)){
-        armemu_memory(state, iw);
+    } else if (is_dp_inst(iw)) {
+        armemu_dp(state, cpsr, iw);
+    } else if (is_b_inst(iw)){
+        armemu_b(state, cpsr, iw);
     }
 }
 
@@ -350,7 +398,9 @@ int main(int argc, char **argv)
     struct cpsr_state cpsr;
     unsigned int r;
     int arr[5] = {1,2,3,4,5};
+
 /*
+//quadratic test passed
     arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
     //arm_state_print(&state);
     r = armemu(&state);
@@ -365,8 +415,8 @@ int main(int argc, char **argv)
     arm_state_print(&state);
     
     */
-
-
+/*
+//cmp test passed
     arm_state_init(&state, (unsigned int *) cmp_a, 3, 2, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
@@ -387,11 +437,14 @@ int main(int argc, char **argv)
     printf("cmp(2,2) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-
-
+*/
+    //beq test
+    arm_state_init(&state, (unsigned int *) test_b_a, 1, 1, 0, 0);
+    init_cpsr_state(&cpsr);
+    r = armemu(&state, &cpsr);
+    printf("beq(1,1) = %d\n", r);
+    arm_state_print(&state);
+    print_cpsr_state(&cpsr);
 
     return 0;
-
-
-
 }
