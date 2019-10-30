@@ -60,6 +60,7 @@ int cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
     bl = (long long) b;
 
     result = as - bs;
+    printf("%d\n", result);
 
     cpsr->N = (result < 0);
 
@@ -288,7 +289,7 @@ void armemu_data(struct arm_state *state, struct cpsr_state *cpsr, unsigned int 
         state->regs[rd] = state->regs[rn] - op3;
     }else if(opcode == 0b1010){
         //armemu_cmp(state, iw, rn, op3); 
-	cmp(cpsr, rn, op3);
+	cmp(cpsr, state->regs[rn], op3);
     }
 
     if(rd != PC){
@@ -462,6 +463,7 @@ int main(int argc, char **argv)
     printf("cmp(3,2) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
+
 
     arm_state_init(&state, (unsigned int *) cmp_a, 2, 3, 0, 0);
     init_cpsr_state(&cpsr);
