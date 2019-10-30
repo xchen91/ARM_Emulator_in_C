@@ -49,7 +49,7 @@ void print_cpsr_state(struct cpsr_state *cpsr)
     printf("C = %d\n", cpsr->C);
     printf("V = %d\n", cpsr->V);
 }
-
+/*
 int cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
     int as, bs, result;
     long long al, bl;
@@ -81,6 +81,7 @@ int cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
 
     return 0;
 }
+*/
 
 /* Initialize an arm_state struct with a function pointer and arguments */
 void arm_state_init(struct arm_state *as, unsigned int *func,
@@ -251,6 +252,32 @@ void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsig
     
 }
 */
+void armemu_cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
+    int as, bs, result;
+    long long al, bl;
+
+    as = (int) a;
+    bs = (int) b;
+    al = (long long) a;
+    bl = (long long) b;
+
+    result = as - bs;
+    printf("cmp_result = %d\n", result);
+
+    cpsr->N = (result < 0);
+    cpsr->Z = (result == 0);
+    cpsr->C = (b > a);
+    cpsr-> V = 0;
+    if ((as > 0) && (bs < 0)) {
+        if ((al + bl) > 0x7FFFFFFF) {
+            cpsr->V = 1;
+        }
+    } else if ((as < 0) && (bs > 0)) {
+        if ((al + bl) > 0x80000000) {
+            cpsr->V = 1;
+        }
+    }
+}
 
 void armemu_mul(struct arm_state *state, unsigned int iw)
 {
@@ -289,7 +316,7 @@ void armemu_data(struct arm_state *state, struct cpsr_state *cpsr, unsigned int 
         state->regs[rd] = state->regs[rn] - op3;
     }else if(opcode == 0b1010){
         //armemu_cmp(state, iw, rn, op3); 
-	cmp(cpsr, state->regs[rn], op3);
+	armemu_cmp(cpsr, state->regs[rn], op3);
     }
 
     if(rd != PC){
@@ -471,13 +498,13 @@ int main(int argc, char **argv)
     printf("cmp(2,3) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-/*
+
     arm_state_init(&state, (unsigned int *) cmp_a, 2, 2, 0, 0);
-    r = armemu(&state);
+    r = armemu(&state, &cpsr);
     printf("cmp(2,2) = %d\n", r);
     arm_state_print(&state);
+    print_cpsr_state(&cpsr);
 
-*/
 
 
 
