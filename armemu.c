@@ -382,13 +382,9 @@ unsigned int armemu(struct arm_state *state, struct cpsr_state *cpsr)
     while (state->regs[PC] != 0) {
         armemu_one(state, cpsr);
     }
-
     return state->regs[0];
-<<<<<<< HEAD
 }                
 
-=======
-}
 /*
 void test(struct armemu_state *state, struct cpsr_state *cpsr, unsigned int *func, unsigned int arg0, unsigned int arg1, unsigned int arg2, unsigned int arg3){
     unsigned int r;
@@ -400,7 +396,6 @@ void test(struct armemu_state *state, struct cpsr_state *cpsr, unsigned int *fun
     print_cpsr_state(&cpsr);
 }
 */
->>>>>>> 0db509e0d1102320b78c4726ebf602c0d38b5e37
 int main(int argc, char **argv)
 {
     struct arm_state state;
