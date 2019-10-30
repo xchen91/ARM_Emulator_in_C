@@ -54,22 +54,29 @@ struct cache_direct_mapped{
     int misses;
 };
 
-int size;
+int cache_size = 8;
 /*
 void cache_direct_mapped_init(struct cache_direct_mapped *dmc)
 {
 	int i;
 
-	dmc->slots = (struct cache_slot) malloc(sizeof(struct cache_slot) * size);
+	dmc->slots = (struct cache_slot) malloc(sizeof(struct cache_slot) * cache_size);
 	
 	for(i = 0; i < size; i++){
-	    dmc->slots[i].requests = 0;
-	    dmc->slots[i].hits = 0;
-	    dmc->slots[i].misses = 0;
+	    dmc->requests = 0;
+	    dmc->hits = 0;
+	    dmc->misses = 0;
 	}
-
 }
 */
+
+void cache_print(struct cache_direct_mapped *dmc)
+{
+    printf("Cache:\n");
+    printf("Number of requests:\n");
+    printf("Number of hits: (hit ratio: )\n");
+    printf("Number of misses: (miss ratio: )\n");
+}
 
 void init_cpsr_state(struct cpsr_state *cpsr)
 {
@@ -450,6 +457,8 @@ int main(int argc, char **argv)
 {
     struct arm_state state;
     struct cpsr_state cpsr;
+    struct cache_direct_mapped dmc;
+
     int c, a;
     unsigned int emu;
     int arr[5] = {1,2,3,4,5};
@@ -459,6 +468,7 @@ int main(int argc, char **argv)
     //quadratic test:
     arm_state_init(&state, (unsigned int *) quadratic_a, 1, 2, 3, 4);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = quadratic_c(1,2,3,4);
     a = quadratic_a(1,2,3,4);
     emu = armemu(&state, &cpsr);
@@ -468,12 +478,14 @@ int main(int argc, char **argv)
     printf("emu(quadratic(x=1,a=2,b=3,c=4)) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr);
+    cache_print(&dmc);
 */
 
 /*
     // sum_array test:
     arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = sum_array_c(arr, 5);
     a = sum_array_a(arr, 5);
     emu = armemu(&state, &cpsr);
@@ -483,12 +495,15 @@ int main(int argc, char **argv)
     printf("emu(sum_array({1,2,3,4,5})) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr);
+    cache_print(&dmc);
+
 */
 
 /*   
     //find_max test:
     arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr, 5, 0, 0);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = find_max_c(arr, 5);
     a = find_max_a(arr, 5);
     emu = armemu(&state, &cpsr);
@@ -498,12 +513,15 @@ int main(int argc, char **argv)
     printf("emu(find_max({1,2,3,4,5})) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr);
+    cache_print(&dmc);
+
 */
 
 /*
     //fib_iter test:
     arm_state_init(&state, (unsigned int *) fib_iter_a, 5, 0, 0, 0);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = fib_iter_c(5);
     a = fib_iter_a(5);
     emu = armemu(&state, &cpsr);
@@ -512,13 +530,16 @@ int main(int argc, char **argv)
     printf("fib_iter_a(5) = %d\n", a);
     printf("emu(fib_iter(5)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr); 
+    //print_cpsr_state(&cpsr);
+    cache_print(&dmc);
+
 */
    
 /* 
     //fib_rec test:
     arm_state_init(&state, (unsigned int *) fib_rec_a, 9, 0, 0, 0);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = fib_rec_c(9);
     a = fib_rec_a(9);
     emu = armemu(&state, &cpsr);
@@ -528,12 +549,15 @@ int main(int argc, char **argv)
     printf("emu(fib_rec(9)) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr); 
+    cache_print(&dmc);
 */
+
     
-    
+/*    
     //strlen test:
     arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) str, 0, 0, 0);
     init_cpsr_state(&cpsr);
+    //cache_direct_mapped_init(&dmc);
     c = strlen_c(str);
     a = strlen_a(str);
     emu = armemu(&state, &cpsr);
@@ -543,7 +567,8 @@ int main(int argc, char **argv)
     printf("emu(strlen(Hello, World!)) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr);
-    
-    
+    cache_print(&dmc);
+
+*/        
     return 0;
 }
