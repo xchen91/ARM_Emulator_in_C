@@ -22,6 +22,7 @@ int str_a(int a, int b);
 int cmp_a();
 int test_b_a();
 int sum_array_a();
+int fib_rec_a();
 
 /* The complete machine state */
 struct arm_state {
@@ -235,7 +236,9 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
     
     if(cond == 0b1110){ //cond is ignored : b and bl
     	if((iw >> 24) & 0b1 == 1){ //bl
+	    printf("bl\n");
             state->regs[LR] = state->regs[PC] + 4;//return to the next instruction after bl  
+	    state->regs[PC] = state->regs[PC] + (8 + offset);
 	}else{ //b 
 	    state->regs[PC] = state->regs[PC] + (8 + offset);
 	    printf("b\n");
@@ -450,6 +453,14 @@ int main(int argc, char **argv)
     printf("beq(2,3) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-*/
+*/  
+    //fib_rec test
+    arm_state_init(&state, (unsigned int *) fib_rec_a, 9, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    r = armemu(&state, &cpsr);
+    printf("fib(5) = %d\n", r);
+    arm_state_print(&state);
+    print_cpsr_state(&cpsr);
+
     return 0;
 }
