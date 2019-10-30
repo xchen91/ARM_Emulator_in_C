@@ -433,6 +433,7 @@ int main(int argc, char **argv)
     //quadratic test:
     arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
     init_cpsr_state(&cpsr);
+    c = quadratic_c(1,2,3,4);
     r = armemu(&state);
     printf("quadratic = %d\n", r);
     arm_state_print(&state);
@@ -442,7 +443,6 @@ int main(int argc, char **argv)
 
     // sum_array test:
     arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
-    //arm_state_print(&state);
     init_cpsr_state(&cpsr);
     c = sum_array_c(arr, 5);
     a = sum_array_a(arr, 5);
