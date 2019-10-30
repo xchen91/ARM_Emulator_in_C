@@ -8,5 +8,5 @@ test_b_a:
 	bx lr
 
 done:
-	add r0, r0, #10
+	add r0, r0, #5
 	bx lr
