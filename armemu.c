@@ -46,6 +46,35 @@ struct cpsr_state {
     int V;
 };
 
+struct cache_slot{
+    int v;
+    unsigned int tag;
+};
+
+struct cache_direct_mapped{
+    struct cache_slot *slots;
+    int requests;
+    int hits;
+    int misses;
+};
+
+int size;
+/*
+void cache_direct_mapped_init(struct cache_direct_mapped *dmc)
+{
+	int i;
+
+	dmc->slots = (struct cache_slot) malloc(sizeof(struct cache_slot) * size);
+	
+	for(i = 0; i < size; i++){
+	    dmc->slots[i].requests = 0;
+	    dmc->slots[i].hits = 0;
+	    dmc->slots[i].misses = 0;
+	}
+
+}
+*/
+
 void init_cpsr_state(struct cpsr_state *cpsr)
 {
     cpsr->N = 0;
