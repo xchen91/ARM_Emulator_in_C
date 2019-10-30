@@ -19,10 +19,11 @@ int str_a(int a, int b);
 */
 //int test_a();
 //int sum_array_a();
-int cmp_a();
 int test_b_a();
 int sum_array_a();
 int fib_rec_a();
+int cmp_a();
+
 
 /* The complete machine state */
 struct arm_state {
@@ -332,15 +333,6 @@ void armemu_mem(struct arm_state *state, unsigned int iw)
     rm = iw & 0xF;
     imm = iw & 0xFFF;
     immediate = (iw >> 25) & 0b1;
-    //check i
-    /*
-    if (is_immediate(iw)){
-        rm = iw & 0xF;
-        offset = state->regs[rm]; 
-    }else{
-        offset = iw & 0xFFF;
-    }
-    */
     offset = immediate ? state->regs[rm] : imm; 
     //check u
     if((iw >> 23) & 0b1 == 1){
@@ -377,14 +369,19 @@ void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
 
     if (is_bx_inst(iw)) {
         armemu_bx(state);
+	state->num_b_inst++;
     } else if (is_mul_inst(iw)){
         armemu_mul(state, iw);
+	state->num_dp_inst++;
     } else if (is_dp_inst(iw)) {
         armemu_dp(state, cpsr, iw);
+	state->num_dp_inst++;
     } else if (is_b_inst(iw)){
         armemu_b(state, cpsr, iw);
+	state->num_b_inst++;
     } else if (is_mem_inst(iw)){
     	armemu_mem(state, iw);
+	state->num_mem_inst++;
     }
 }
 
@@ -395,6 +392,7 @@ unsigned int armemu(struct arm_state *state, struct cpsr_state *cpsr)
     /* This happens when bx lr is issued and lr is 0 */
     while (state->regs[PC] != 0) {
         armemu_one(state, cpsr);
+	state->num_inst++;
     }
     return state->regs[0];
 }                
@@ -417,65 +415,68 @@ int main(int argc, char **argv)
     unsigned int r;
     int arr[5] = {1,2,3,4,5};
 
-    //test(&state, &cpsr, (unsigned int *)test_b_a, 3, 2, 0, 0);
 /*
-//quadratic test passed
+    //quadratic test:
     arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
-    //arm_state_print(&state);
+    init_cpsr_state(&cpsr);
     r = armemu(&state);
     printf("quadratic = %d\n", r);
     arm_state_print(&state);
+    print_cpsr_state(&cpsr);
 */
+
 /*
-    // sum_array_a.s 
+    // sum_array test:
     arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
     //arm_state_print(&state);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
-    printf("result = %d\n", r);
+    printf("sum_array = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-    
 */
-/*
-//cmp test passed
+
+/*    
+    //cmp test:
     arm_state_init(&state, (unsigned int *) cmp_a, 3, 2, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
     printf("cmp(3,2) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
+*/
 
-
+/* 
+    //another cmp test:
     arm_state_init(&state, (unsigned int *) cmp_a, 2, 3, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
     printf("cmp(2,3) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-
-    arm_state_init(&state, (unsigned int *) cmp_a, 2, 2, 0, 0);
-    r = armemu(&state, &cpsr);
-    printf("cmp(2,2) = %d\n", r);
-    arm_state_print(&state);
-    print_cpsr_state(&cpsr);
 */
+
 /*
-    //beq test
-    arm_state_init(&state, (unsigned int *) test_b_a, 2, 3, 0, 0);
+    //fib_iter test:
+    arm_state_init(&state, (unsigned int *) fib_iter_a, 5, 0, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
-    printf("beq(2,3) = %d\n", r);
+    printf("fib_iter(5) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-*/  
-    //fib_rec test
+
+*/
+   
+/* 
+    //fib_rec test:
     arm_state_init(&state, (unsigned int *) fib_rec_a, 9, 0, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
-    printf("fib(5) = %d\n", r);
+    printf("fib_rec(9) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-
+*/
+    
+    
     return 0;
 }
