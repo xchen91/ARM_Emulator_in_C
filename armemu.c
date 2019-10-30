@@ -29,6 +29,10 @@ struct arm_state {
     unsigned int regs[NREGS];
     //unsigned int cpsr;
     unsigned char stack[STACK_SIZE];
+    int num_inst;
+    int num_dp_inst;
+    int num_b_inst;
+    int num_mem_inst;
 };
 
 struct cpsr_state {
@@ -70,6 +74,11 @@ void arm_state_init(struct arm_state *as, unsigned int *func,
     for (i = 0; i < STACK_SIZE; i++) {
         as->stack[i] = 0;
     }
+    
+    as->num_inst = 0;
+    as->num_dp_inst = 0;
+    as->num_b_inst = 0;
+    as->num_mem_inst = 0;
 
     /* Set the PC to point to the address of the function to emulate */
     as->regs[PC] = (unsigned int) func;
@@ -94,6 +103,11 @@ void arm_state_print(struct arm_state *as)
     for (i = 0; i < NREGS; i++) {
         printf("reg[%d] = %d\n", i, as->regs[i]);
     } 
+    printf("Dynamic Analysis\n");
+    printf("Number of intructions emulated: %d\n", as->num_inst);
+    printf("Number of data prosessing intructions: %d\n", as->num_dp_inst);
+    printf("Number of branch intructions: %d\n", as->num_b_inst);
+    printf("Number of memory intructions: %d\n", as->num_mem_inst);
 }
 
 bool is_dp_inst(unsigned int iw)
