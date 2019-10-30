@@ -35,7 +35,7 @@ struct cpsr_state {
     int V;
 };
 
-int init_cpsr_state(struct cpsr_state *cpsr)
+void init_cpsr_state(struct cpsr_state *cpsr)
 {
     cpsr->N = 0;
     cpsr->Z = 0;
@@ -49,39 +49,6 @@ void print_cpsr_state(struct cpsr_state *cpsr)
     printf("C = %d\n", cpsr->C);
     printf("V = %d\n", cpsr->V);
 }
-/*
-int cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
-    int as, bs, result;
-    long long al, bl;
-
-    as = (int) a;
-    bs = (int) b;
-    al = (long long) a;
-    bl = (long long) b;
-
-    result = as - bs;
-    printf("%d\n", result);
-
-    cpsr->N = (result < 0);
-
-    cpsr->Z = (result == 0);
-
-    cpsr->C = (b > a);
-
-    cpsr-> V = 0;
-    if ((as > 0) && (bs < 0)) {
-        if ((al + bl) > 0x7FFFFFFF) {
-            cpsr->V = 1;
-        }
-    } else if ((as < 0) && (bs > 0)) {
-        if ((al + bl) > 0x80000000) {
-            cpsr->V = 1;
-        }
-    }
-
-    return 0;
-}
-*/
 
 /* Initialize an arm_state struct with a function pointer and arguments */
 void arm_state_init(struct arm_state *as, unsigned int *func,
@@ -94,9 +61,6 @@ void arm_state_init(struct arm_state *as, unsigned int *func,
     for (i = 0; i < NREGS; i++) {
         as->regs[i] = 0;
     }
-
-    /* Zero out CPSR */
-    //as->cpsr = 0;
 
     /* Zero out the stack */
     for (i = 0; i < STACK_SIZE; i++) {
@@ -125,8 +89,7 @@ void arm_state_print(struct arm_state *as)
 
     for (i = 0; i < NREGS; i++) {
         printf("reg[%d] = %d\n", i, as->regs[i]);
-    }
-    //printf("cpsr = %X\n", as->cpsr);
+    } 
 }
 
 bool is_data_inst(unsigned int iw)
@@ -138,13 +101,6 @@ bool is_data_inst(unsigned int iw)
 
 bool is_mul_inst(unsigned int iw)
 {
-    /*
-    unsigned int op;
-    unsigned int op2;
-    op = (iw >> 4) & 0xF;
-    op2 = (iw >> 22) & 0b111111;
-    return (op == 0b1001) && (accumu == 0b000000);
-    */
     unsigned int op;
     unsigned int accumu;
     op = (iw >> 26) & 0b11;
@@ -176,82 +132,16 @@ bool is_bx_inst(unsigned int iw)
 
     return (bx_code == 0b000100101111111111110001);
 }
-
-
-//check if the instruction is for register or immediate value
+/*
+//Check if the instruction is for register or immediate value
 bool is_immediate(unsigned int iw)
 {
     unsigned int immop;
     immop = (iw >> 25) & 0b1;
     return (immop == 0b1);
 }
-
-/*
-void armemu_cmp(struct arm_state *state, unsigned int iw, unsigned int rn, unsigned int op3)
-{
-    state->cpsr = 0x00000000;
-    int rns, op3s, result;
-    long long rnl, op3l;
-
-    rns = (int) rn;
-    op3s = (int) op3;
-    rnl = (long long) rn;
-    op3l = (long long) op3;
-
-    result = rns - op3s;
-
-    //set N and Z
-    if(result < 0){
-        state->cpsr = state->cpsr | 0x80000000; //N = 1    1000
-        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
-    }else if(result = 0){
-	state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
-        state->cpsr = state->cpsr | 0x40000000; //Z = 1    0100
-    }else{
-	state->cpsr = state->cpsr & 0x7FFFFFFF; //N = 0    0111
-        state->cpsr = state->cpsr & 0xBFFFFFFF; //Z = 0    1011
-    }
-    
-    //set C
-    if(op3 > rn){
-        state->cpsr = state->cpsr | 0x20000000; //C = 1    0010
-    }else{
-        state->cpsr = state->cpsr & 0xDFFFFFFF; //C = 0    1101
-    }
-    //set V
-    state->cpsr = state->cpsr & 0xEFFFFFFF; //V = 0    1110
-    if((rns > 0) && (op3s < 0)){
-        if((rnl + op3l) > 0x7FFFFFFF){
-            state->cpsr = state->cpsr | 0x1FFFFFFF; //V = 1    0001
-        }
-    }else if((rns < 0) && (op3s > 0)){
-        if((rnl + op3l) > 0x80000000){
-            state->cpsr = state->cpsr | 0x1FFFFFFF; //V = 1    0001
-        }
-    }
-    
-    state->cpsr = (result < 0) ? (state->cpsr | (0b1 << 31)) : (state->cpsr | (0b0 << 31));
-    state->cpsr = (result == 0) ? (state->cpsr | (0b1 << 30)) : (state->cpsr | (0b0 << 30));
-    state->cpsr = (op3 > rn) ? (state->cpsr | (0b1 << 29)) : (state->cpsr | (0b0 << 29));
-    state->cpsr = state->cpsr | (0b0 << 28);
 */
-    // (state->cpsr >> 31) & 0b1 = (result < 0); //cpsr->N
-    // (state->cpsr >> 30) & 0b1 = (resul == 0); //cpsr->Z
-    // (state->cpsr >> 29) & 0b1 = (op3 > rn);   //cpsr->C
-    // (state->cpsr >> 28) & 0b1 = 0;            //cpsr->V
-    /*
-    if((rns > 0) && (op3s < 0)){
-        if((rnl + op3l) > 0x7FFFFFFF){
-            state->cpsr = state->cpsr | (0b1 << 28);
-        }
-    }else if((rns < 0) && (op3s > 0)){
-        if((rnl + op3l) > 0x80000000){
-            state->cpsr = state->cpsr | (0b1 << 28);
-        }
-    }
-    
-}
-*/
+//Set N,Z,C,V flags in cpsr_state
 void armemu_cmp(struct cpsr_state *cpsr, unsigned int a, unsigned int b) {
     int as, bs, result;
     long long al, bl;
@@ -407,13 +297,8 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
     }
     printf("target = %d\n", target);
     //check l
-    if ((iw >> 20) & 0b1 == 1){ //load
-	//if((iw >> 23) & 0b1 == 1){ //add
-	   // target = state->regs[rn] + offset;
-	//}else{ //substract
-	   // target = state->regs[rn] - offset;
-        //}
-        if((iw >> 22) & 0b1 == 1){ // ldrb
+    if ((iw >> 20) & 0b1 == 1){ //load     
+	if((iw >> 22) & 0b1 == 1){ // ldrb
             state->regs[rd] = *((unsigned char*)target);
         }else{ //ldr
             state->regs[rd] = *((unsigned int*)target);
@@ -423,9 +308,7 @@ void armemu_memory(struct arm_state *state, unsigned int iw)
 	    *((unsigned char*)target) = state->regs[rd];
         }else{ //str
 	    *((unsigned int*)target) = state->regs[rd];
-        }
-        //target = state->regs[rd];
-        //*((unsigned int*)(state->regs[rn] + offset)) = target;
+        }  
     }
 
     if(rd != PC){
@@ -504,7 +387,6 @@ int main(int argc, char **argv)
     printf("cmp(2,2) = %d\n", r);
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
-
 
 
 
