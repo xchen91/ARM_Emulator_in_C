@@ -303,20 +303,26 @@ void armemu_bx(struct arm_state *state)
 
     state->regs[PC] = state->regs[rn];
 }
-/*
+
 void armemu_mem(struct arm_state *state, unsigned int iw)
 {
-    unsigned int rd, rn, rm, offset, target;
+    unsigned int rd, rn, rm, imm, immediate,offset, target;
  
     rd = (iw >> 12) & 0xF;
     rn = (iw >> 16) & 0xF;
+    rm = iw & 0xF;
+    imm = iw & 0xFFF;
+    immediate = (iw >> 25) & 0b1;
     //check i
+    /*
     if (is_immediate(iw)){
         rm = iw & 0xF;
         offset = state->regs[rm]; 
     }else{
         offset = iw & 0xFFF;
     }
+    */
+    offset = immediate ? state->regs[rm] : imm; 
     //check u
     if((iw >> 23) & 0b1 == 1){
         target = state->regs[rn] + offset;
@@ -343,7 +349,7 @@ void armemu_mem(struct arm_state *state, unsigned int iw)
         state->regs[PC] = state->regs[PC] + 4;
     }
 }
-*/
+
 void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
 {
     unsigned int iw;
@@ -358,6 +364,8 @@ void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
         armemu_dp(state, cpsr, iw);
     } else if (is_b_inst(iw)){
         armemu_b(state, cpsr, iw);
+    } else if (is_mem_inst(iw)){
+    	armemu_mem(state, iw);
     }
 }
 
