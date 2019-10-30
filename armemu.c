@@ -399,6 +399,7 @@ void armemu_one(struct arm_state *state, struct cpsr_state *cpsr)
     }
 }
 
+
 unsigned int armemu(struct arm_state *state, struct cpsr_state *cpsr)
 {
     /* Execute instructions until PC = 0 */
