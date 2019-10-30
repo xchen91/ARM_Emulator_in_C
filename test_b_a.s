@@ -3,7 +3,7 @@
 
 test_b_a:
 	cmp r0, r1
-	beq done
+	bne done
 	add r0, r0, #10	
 	bx lr
 

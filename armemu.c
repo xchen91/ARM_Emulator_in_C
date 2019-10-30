@@ -237,7 +237,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	}else{ //b 
 	    state->regs[PC] = state->regs[PC] + (8 + offset);
 	    printf("b\n");
-
 	}
 	
     }else{
@@ -252,6 +251,7 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//bne
 	}else if(cond == 0b0001){
 	    if(cpsr->Z == 0){
+		printf("bne\n");
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
 	        state->regs[PC] = state->regs[PC] + 4;
@@ -259,6 +259,7 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//bgt
 	}else if(cond == 0b1100){
 	    if((cpsr->Z == 0) && (cpsr->N == cpsr->V)){
+		printf("bgt\n");
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
 	        state->regs[PC] = state->regs[PC] + 4;
@@ -266,6 +267,7 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//blt
 	}else if(cond == 0b1011){
 	    if(cpsr->N != cpsr->V){
+		printf("blt\n");
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
 	        state->regs[PC] = state->regs[PC] + 4;
@@ -439,7 +441,7 @@ int main(int argc, char **argv)
     print_cpsr_state(&cpsr);
 */
     //beq test
-    arm_state_init(&state, (unsigned int *) test_b_a, 1, 1, 0, 0);
+    arm_state_init(&state, (unsigned int *) test_b_a, 1, 2, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
     printf("beq(1,1) = %d\n", r);
