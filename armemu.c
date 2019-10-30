@@ -264,6 +264,14 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	    }else{
 	        state->regs[PC] = state->regs[PC] + 4;
 	    }
+	//bge
+	}else if(cond == 0b1010){
+	    if(cpsr->N == cpsr->V){
+	        printf("bge\n");
+		state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+		state->regs[PC] = state->regs[PC] + 4;
+	    }
 	//blt
 	}else if(cond == 0b1011){
 	    if(cpsr->N != cpsr->V){
@@ -271,6 +279,14 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
 	        state->regs[PC] = state->regs[PC] + 4;
+	    }
+	//ble
+	}else if(cond == 0b1101){
+	    if((cpsr->Z == 1) && (cpsr->N != cpsr->V)){
+	        printf("ble\n");
+	        state->regs[PC] = state->regs[PC] + (8 + offset);
+	    }else{
+	        state->regs[PC] = state->regs[PC] + 4; 
 	    }
 	}
     }
@@ -441,7 +457,7 @@ int main(int argc, char **argv)
     print_cpsr_state(&cpsr);
 */
     //beq test
-    arm_state_init(&state, (unsigned int *) test_b_a, 1, 2, 0, 0);
+    arm_state_init(&state, (unsigned int *) test_b_a, 3, 2, 0, 0);
     init_cpsr_state(&cpsr);
     r = armemu(&state, &cpsr);
     printf("beq(1,1) = %d\n", r);
