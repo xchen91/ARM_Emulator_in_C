@@ -8,22 +8,18 @@
 #define PC 15
 
 /* Assembly functions to emulate */
-/*
-int add_a(int a, int b);
-int add2_a(int a, int b);
-int mov_a(int a, int b);
-int sub_a(int a, int b);
-int cmp_a(int a, int b);
-int ldr_a(int a, int b);
-int str_a(int a, int b);
-*/
-//int test_a();
-//int sum_array_a();
-int test_b_a();
-int sum_array_a();
-int sum_array_c();
-int fib_rec_a();
-int cmp_a();
+int quadratic_c(int x, int a, int b, int c);
+int quadratic_a(int x, int a, int b, int c);
+int sum_array_c(int *array, int n);
+int sum_array_a(int *array, int n);
+int find_max_c(int *array, int n);
+int find_max_a(int *array, int n);
+int fib_iter_c(int n);
+int fib_iter_a(int n);
+int fib_rec_c(int n);
+int fib_rec_a(int n);
+int strlen_c(char *s);
+int strlen_a(char *s);
 
 
 /* The complete machine state */
@@ -457,19 +453,24 @@ int main(int argc, char **argv)
     int c, a;
     unsigned int emu;
     int arr[5] = {1,2,3,4,5};
+    char *str = "Hello, world!";
 
 /*
     //quadratic test:
-    arm_state_init(&state, (unsigned int *) test_a, 1, 2, 3, 4);
+    arm_state_init(&state, (unsigned int *) quadratic_a, 1, 2, 3, 4);
     init_cpsr_state(&cpsr);
     c = quadratic_c(1,2,3,4);
-    r = armemu(&state);
-    printf("quadratic = %d\n", r);
+    a = quadratic_a(1,2,3,4);
+    emu = armemu(&state, &cpsr);
+    printf("quadratic\n");
+    printf("quadratic_c(x=1,a=2,b=3,c=4) = %d\n", c);
+    printf("quadratic_a(x=1,a=2,b=3,c=4) = %d\n", a);
+    printf("emu(quadratic(x=1,a=2,b=3,c=4)) = %d\n", emu);
     arm_state_print(&state);
-    print_cpsr_state(&cpsr);
+    //print_cpsr_state(&cpsr);
 */
 
-
+/*
     // sum_array test:
     arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
     init_cpsr_state(&cpsr);
@@ -482,28 +483,66 @@ int main(int argc, char **argv)
     printf("emu(sum_array({1,2,3,4,5})) = %d\n", emu);
     arm_state_print(&state);
     //print_cpsr_state(&cpsr);
+*/
 
+/*   
+    //find_max test:
+    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr, 5, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = find_max_c(arr, 5);
+    a = find_max_a(arr, 5);
+    emu = armemu(&state, &cpsr);
+    printf("find_max\n");
+    printf("find_max_c({1,2,3,4,5}) = %d\n", c);
+    printf("find_max_a({1,2,3,4,5}) = %d\n", a);
+    printf("emu(find_max({1,2,3,4,5})) = %d\n", emu);
+    arm_state_print(&state);
+    //print_cpsr_state(&cpsr);
+*/
 
 /*
     //fib_iter test:
     arm_state_init(&state, (unsigned int *) fib_iter_a, 5, 0, 0, 0);
     init_cpsr_state(&cpsr);
-    r = armemu(&state, &cpsr);
-    printf("fib_iter(5) = %d\n", r);
+    c = fib_iter_c(5);
+    a = fib_iter_a(5);
+    emu = armemu(&state, &cpsr);
+    printf("fib_iter\n");
+    printf("fib_iter_c(5) = %d\n", c);
+    printf("fib_iter_a(5) = %d\n", a);
+    printf("emu(fib_iter(5)) = %d\n", emu);
     arm_state_print(&state);
-    print_cpsr_state(&cpsr);
-
+    //print_cpsr_state(&cpsr); 
 */
    
 /* 
     //fib_rec test:
     arm_state_init(&state, (unsigned int *) fib_rec_a, 9, 0, 0, 0);
     init_cpsr_state(&cpsr);
-    r = armemu(&state, &cpsr);
-    printf("fib_rec(9) = %d\n", r);
+    c = fib_rec_c(9);
+    a = fib_rec_a(9);
+    emu = armemu(&state, &cpsr);
+    printf("fib_rec\n");
+    printf("fib_rec_c(9) = %d\n", c);
+    printf("fib_rec_a(9) = %d\n", a);
+    printf("emu(fib_rec(9)) = %d\n", emu);
     arm_state_print(&state);
-    print_cpsr_state(&cpsr);
+    //print_cpsr_state(&cpsr); 
 */
+    
+    
+    //strlen test:
+    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) str, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = strlen_c(str);
+    a = strlen_a(str);
+    emu = armemu(&state, &cpsr);
+    printf("strlen\n");
+    printf("strlen_c(Hello, World!) = %d\n", c);
+    printf("strlen_a(Hello, World!) = %d\n", a);
+    printf("emu(strlen(Hello, World!)) = %d\n", emu);
+    arm_state_print(&state);
+    //print_cpsr_state(&cpsr);
     
     
     return 0;
