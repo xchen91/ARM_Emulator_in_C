@@ -417,6 +417,7 @@ int main(int argc, char **argv)
     printf("quadratic = %d\n", r);
     arm_state_print(&state);
 */
+/*
     // sum_array_a.s 
     arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
     //arm_state_print(&state);
@@ -426,7 +427,7 @@ int main(int argc, char **argv)
     arm_state_print(&state);
     print_cpsr_state(&cpsr);
     
-    
+*/
 /*
 //cmp test passed
     arm_state_init(&state, (unsigned int *) cmp_a, 3, 2, 0, 0);
