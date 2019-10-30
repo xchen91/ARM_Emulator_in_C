@@ -372,7 +372,7 @@ unsigned int armemu(struct arm_state *state, struct cpsr_state *cpsr)
 
     return state->regs[0];
 }                
-  
+
 int main(int argc, char **argv)
 {
     struct arm_state state;
