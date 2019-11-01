@@ -25,7 +25,6 @@ int strlen_a(char *s);
 /* The complete machine state */
 struct arm_state {
     unsigned int regs[NREGS];
-    //unsigned int cpsr;
     unsigned char stack[STACK_SIZE];
     int num_inst;
     int num_dp_inst;
@@ -85,17 +84,6 @@ void init_cpsr_state(struct cpsr_state *cpsr)
     cpsr->C = 0;
     cpsr->V = 0;
 }
-
-/*
-void print_cpsr_state(struct cpsr_state *cpsr)
-{
-    printf("cpsr status:\n");
-    printf("N = %d\n", cpsr->N);
-    printf("Z = %d\n", cpsr->Z);
-    printf("C = %d\n", cpsr->C);
-    printf("V = %d\n", cpsr->V);
-}
-*/
 
 /* Initialize an arm_state struct with a function pointer and arguments */
 void arm_state_init(struct arm_state *as, unsigned int *func,
@@ -206,7 +194,6 @@ void armemu_cmp(struct arm_state *state, struct cpsr_state *cpsr, unsigned int r
     bl = (long long) b;
 
     result = as - bs;
-    //printf("cmp_result = %d\n", result);
 
     cpsr->N = (result < 0);
     cpsr->Z = (result == 0);
@@ -282,21 +269,18 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
     
     if(cond == 0b1110){ //cond is ignored : b and bl
     	if((iw >> 24) & 0b1 == 1){ //bl
-	    //printf("bl\n");
 	    state->num_b_taken++;
             state->regs[LR] = state->regs[PC] + 4;//return to the next instruction after bl  
 	    state->regs[PC] = state->regs[PC] + (8 + offset);
 	}else{ //b 
 	    state->num_b_taken++;
 	    state->regs[PC] = state->regs[PC] + (8 + offset);
-	    //printf("b\n");
 	}
 	
     }else{
 	//beq
     	if(cond == 0b0000){ 
 	    if(cpsr->Z == 1){
-		//printf("beq\n");
 		state->num_b_taken++;
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -306,7 +290,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//bne
 	}else if(cond == 0b0001){
 	    if(cpsr->Z == 0){
-		//printf("bne\n");
 		state->num_b_taken++;
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -316,7 +299,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//bgt
 	}else if(cond == 0b1100){
 	    if((cpsr->Z == 0) && (cpsr->N == cpsr->V)){
-		//printf("bgt\n");
 		state->num_b_taken++;
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -326,7 +308,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//bge
 	}else if(cond == 0b1010){
 	    if(cpsr->N == cpsr->V){
-	        //printf("bge\n");
 		state->num_b_taken++;
 		state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -336,7 +317,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//blt
 	}else if(cond == 0b1011){
 	    if(cpsr->N != cpsr->V){
-		//printf("blt\n");
 		state->num_b_taken++;
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -346,7 +326,6 @@ void armemu_b(struct arm_state *state, struct cpsr_state *cpsr, unsigned int iw)
 	//ble
 	}else if(cond == 0b1101){
 	    if((cpsr->Z == 1) && (cpsr->N != cpsr->V)){
-	        //printf("ble\n");
 		state->num_b_taken++;
 	        state->regs[PC] = state->regs[PC] + (8 + offset);
 	    }else{
@@ -442,17 +421,6 @@ unsigned int armemu(struct arm_state *state, struct cpsr_state *cpsr)
     return state->regs[0];
 }                
 
-/*
-void test(struct armemu_state *state, struct cpsr_state *cpsr, unsigned int *func, unsigned int arg0, unsigned int arg1, unsigned int arg2, unsigned int arg3){
-    unsigned int r;
-    arm_state_init(&state, (unsigned int *)func, arg0, arg1, arg2, arg3);
-    init_cpsr_state(&cpsr);
-    r = armemu(&state, &cpsr);
-    printf("result = %d\n", r);
-    arm_state_print(&state);
-    print_cpsr_state(&cpsr);
-}
-*/
 int main(int argc, char **argv)
 {
     struct arm_state state;
@@ -461,114 +429,286 @@ int main(int argc, char **argv)
 
     int c, a;
     unsigned int emu;
-    int arr[5] = {1,2,3,4,5};
-    char *str = "Hello, world!";
 
-/*
-    //quadratic test:
-    arm_state_init(&state, (unsigned int *) quadratic_a, 1, 2, 3, 4);
+    printf("-------quadratic_test-------\n");
+    arm_state_init(&state, (unsigned int *) quadratic_a, 2, 3, 4, 5);
     init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = quadratic_c(1,2,3,4);
-    a = quadratic_a(1,2,3,4);
+    c = quadratic_c(2,3,4,5);
+    a = quadratic_a(2,3,4,5);
     emu = armemu(&state, &cpsr);
-    printf("quadratic\n");
-    printf("quadratic_c(x=1,a=2,b=3,c=4) = %d\n", c);
-    printf("quadratic_a(x=1,a=2,b=3,c=4) = %d\n", a);
-    printf("emu(quadratic(x=1,a=2,b=3,c=4)) = %d\n", emu);
+    printf("test1 {2, 3, 4, 5}:\n");
+    printf("quadratic_c(2, 3, 4, 5) = %d\n", c);
+    printf("quadratic_a(2, 3, 4, 5) = %d\n", a);
+    printf("emu(quadratic(2, 3, 4, 5)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr);
     cache_print(&dmc);
-*/
+    printf("\n");
 
-/*
-    // sum_array test:
-    arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr, 5, 0, 0);
+    arm_state_init(&state, (unsigned int *) quadratic_a, -1, -2, -3, -4);
     init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = sum_array_c(arr, 5);
-    a = sum_array_a(arr, 5);
+    c = quadratic_c(-1,-2,-3,-4);
+    a = quadratic_a(-1,-2,-3,-4);
     emu = armemu(&state, &cpsr);
-    printf("sum_array\n");
-    printf("sum_array_c({1,2,3,4,5}) = %d\n", c);
-    printf("sum_array_a({1,2,3,4,5}) = %d\n", a);
-    printf("emu(sum_array({1,2,3,4,5})) = %d\n", emu);
+    printf("test2 {-1, -2, -3, -4}:\n");
+    printf("quadratic_c(-1, -2, -3, -4) = %d\n", c);
+    printf("quadratic_a(-1, -2, -3, -4) = %d\n", a);
+    printf("emu(quadratic(-1, -2, -3, -4)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr);
     cache_print(&dmc);
+    printf("\n");
 
-*/
-
-/*   
-    //find_max test:
-    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr, 5, 0, 0);
+    arm_state_init(&state, (unsigned int *) quadratic_a, 0, 2, 3, 4);
     init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = find_max_c(arr, 5);
-    a = find_max_a(arr, 5);
+    c = quadratic_c(0, 2, 3, 4);
+    a = quadratic_a(0, 2, 3, 4);
     emu = armemu(&state, &cpsr);
-    printf("find_max\n");
-    printf("find_max_c({1,2,3,4,5}) = %d\n", c);
-    printf("find_max_a({1,2,3,4,5}) = %d\n", a);
-    printf("emu(find_max({1,2,3,4,5})) = %d\n", emu);
+    printf("test3 {0, 2, 3, 4}:\n");
+    printf("quadratic_c(0, 2, 3, 4) = %d\n", c);
+    printf("quadratic_a(0, 2, 3, 4) = %d\n", a);
+    printf("emu(quadratic(0, 2, 3, 4)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr);
     cache_print(&dmc);
+    printf("\n");
 
-*/
-
-/*
-    //fib_iter test:
-    arm_state_init(&state, (unsigned int *) fib_iter_a, 5, 0, 0, 0);
+    arm_state_init(&state, (unsigned int *) quadratic_a, 0, -2, -3, 2);
     init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = fib_iter_c(5);
-    a = fib_iter_a(5);
+    c = quadratic_c(0, -2, -3, 2);
+    a = quadratic_a(0, -2, -3, 2);
     emu = armemu(&state, &cpsr);
-    printf("fib_iter\n");
-    printf("fib_iter_c(5) = %d\n", c);
-    printf("fib_iter_a(5) = %d\n", a);
-    printf("emu(fib_iter(5)) = %d\n", emu);
+    printf("test4 {0, -2, -3, 2}:\n");
+    printf("quadratic_c(0, -2, -3, 2) = %d\n", c);
+    printf("quadratic_a(0, -2, -3, 2) = %d\n", a);
+    printf("emu(quadratic(0, -2, -3, 2)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr);
     cache_print(&dmc);
-
-*/
-   
-/* 
-    //fib_rec test:
-    arm_state_init(&state, (unsigned int *) fib_rec_a, 9, 0, 0, 0);
-    init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = fib_rec_c(9);
-    a = fib_rec_a(9);
-    emu = armemu(&state, &cpsr);
-    printf("fib_rec\n");
-    printf("fib_rec_c(9) = %d\n", c);
-    printf("fib_rec_a(9) = %d\n", a);
-    printf("emu(fib_rec(9)) = %d\n", emu);
-    arm_state_print(&state);
-    //print_cpsr_state(&cpsr); 
-    cache_print(&dmc);
-*/
-
+    printf("\n");
     
-/*    
-    //strlen test:
-    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) str, 0, 0, 0);
+    printf("-------sum_array_test-------\n");
+    int arr1[] = {2, 3, 4, 5};
+    arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr1, 4, 0, 0);
     init_cpsr_state(&cpsr);
-    //cache_direct_mapped_init(&dmc);
-    c = strlen_c(str);
-    a = strlen_a(str);
+    c = sum_array_c(arr1, 4);
+    a = sum_array_a(arr1, 4);
+    emu = armemu(&state, &cpsr);
+    printf("test1 {2, 3, 4, 5}:\n");
+    printf("sum_array_c(2, 3, 4, 5) = %d\n", c);
+    printf("sum_array_a(2, 3, 4, 5) = %d\n", a);
+    printf("emu(sum_array{2, 3, 4, 5}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr2[] = {0, 2, -4, 12, -63};
+    arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr2, 5, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = sum_array_c(arr2, 5);
+    a = sum_array_a(arr2, 5);
+    emu = armemu(&state, &cpsr);
+    printf("test2 {0, 2, -4, 12, -63}:\n");
+    printf("sum_array_c(0, 2, -4, 12, -63) = %d\n", c);
+    printf("sum_array_a(0, 2, -4, 12, -63) = %d\n", a);
+    printf("emu(sum_array{0, 2, -4, 12, -63}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr3[] = {-1, -2, -3, -4, 1, 2, 3, 4};
+    arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr3, 8, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = sum_array_c(arr3, 8);
+    a = sum_array_a(arr3, 8);
+    emu = armemu(&state, &cpsr);
+    printf("test3 {-1, -2, -3, -4, 1, 2, 3, 4}:\n");
+    printf("sum_array_c(-1, -2, -3, -4, 1, 2, 3, 4) = %d\n", c);
+    printf("sum_array_a(-1, -2, -3, -4, 1, 2, 3, 4) = %d\n", a);
+    printf("emu(sum_array{-1, -2, -3, -4, 1, 2, 3, 4}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr4[1001];
+    for (int i = 0; i < 1001; i++){
+        arr4[i] = i;
+    }
+    arm_state_init(&state, (unsigned int *) sum_array_a, (unsigned int) arr4, 1001, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = sum_array_c(arr4, 1001);
+    a = sum_array_a(arr4, 1001);
+    emu = armemu(&state, &cpsr);
+    printf("test4 {0, 1, 2, 3, 4...999, 1000}:\n");
+    printf("sum_array_c(0, 1, 2, 3, 4...999, 1000) = %d\n", c);
+    printf("sum_array_a(0, 1, 2, 3, 4...999, 1000) = %d\n", a);
+    printf("emu(sum_array{0, 1, 2, 3, 4...999, 1000}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    printf("-------find_max_test-------\n");
+    int arr5[] = {6, 7, 8, 9};
+    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr5, 4, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = find_max_c(arr5, 4);
+    a = find_max_a(arr5, 4);
+    emu = armemu(&state, &cpsr);
+    printf("test1 {6, 7, 8, 9}:\n");
+    printf("find_max_c(6, 7, 8, 9) = %d\n", c);
+    printf("find_max_a(6, 7, 8, 9) = %d\n", a);
+    printf("emu(find_max{6, 7, 8, 9}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr6[] = {-5, -6, -7, -8};
+    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr6, 4, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = find_max_c(arr6, 4);
+    a = find_max_a(arr6, 4);
+    emu = armemu(&state, &cpsr);
+    printf("test2 {-5, -6, -7, -8}:\n");
+    printf("find_max_c(-5, -6, -7, -8) = %d\n", c);
+    printf("find_max_a(-5, -6, -7, -8) = %d\n", a);
+    printf("emu(find_max{-5, -6, -7, -8}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr7[] = {-13, -26, 0, 23, 45, 108};
+    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr7, 6, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = find_max_c(arr7, 6);
+    a = find_max_a(arr7, 6);
+    emu = armemu(&state, &cpsr);
+    printf("test3 {-13, -26, 0, 23, 45, 108}:\n");
+    printf("find_max_c(-13, -26, 0, 23, 45, 108) = %d\n", c);
+    printf("find_max_a(-13, -26, 0, 23, 45, 108) = %d\n", a);
+    printf("emu(find_max{-13, -26, 0, 23, 45, 108}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    int arr8[1001];
+    for (int i = 0; i < 1001; i++){
+        arr8[i] = i - 1000;
+    }
+    arm_state_init(&state, (unsigned int *) find_max_a, (unsigned int) arr8, 1001, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = find_max_c(arr8, 1001);
+    a = find_max_a(arr8, 1001);
+    emu = armemu(&state, &cpsr);
+    printf("test4 {-1000, -999. -998...-3, -2, -1, 0}:\n");
+    printf("sum_array_c(-1000, -999. -998...-3, -2, -1, 0) = %d\n", c);
+    printf("sum_array_a(-1000, -999. -998...-3, -2, -1, 0) = %d\n", a);
+    printf("emu(sum_array{-1000, -999. -998...-3, -2, -1, 0}) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    printf("-------fib_iter_test-------\n");
+    printf("This test will print the first 20 fibonacci numbers generated by using itertive way.\n");
+    for(int i = 0; i < 20; i++){
+      int c = fib_iter_c(i);
+      printf("fib_iter_c(%d) = %d\n", i, c);
+    }
+    printf("\n");
+    for(int i = 0; i < 20; i++){
+      int a = fib_iter_a(i);
+      printf("fib_iter_a(%d) = %d\n", i, a);
+    }
+     printf("\n");
+
+    for(int i = 0; i < 20; i++){
+        arm_state_init(&state, (unsigned int *) fib_iter_a, (unsigned int) i, 0, 0, 0);
+        init_cpsr_state(&cpsr);
+        emu = armemu(&state, &cpsr);
+        printf("emu(fib_iter(%d)) = %d\n", i, emu);
+    }
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+   
+    printf("-------fib_rec_test-------\n");
+
+    printf("This test will print the first 20 fibonacci numbers generated by using recursive way.\n");
+    for(int i = 0; i < 20; i++){
+      int c = fib_rec_c(i);
+      printf("fib_rec_c(%d) = %d\n", i, c);
+    }
+    printf("\n");
+    for(int i = 0; i < 20; i++){
+      int a = fib_rec_a(i);
+      printf("fib_rec_a(%d) = %d\n", i, a);
+    }
+     printf("\n");
+
+    for(int i = 0; i < 20; i++){
+        arm_state_init(&state, (unsigned int *) fib_rec_a, (unsigned int) i, 0, 0, 0);
+        init_cpsr_state(&cpsr);
+        emu = armemu(&state, &cpsr);
+        printf("emu(fib_rec(%d)) = %d\n", i, emu); 
+    }
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n"); 
+    
+    printf("-------strlen_test-------\n");
+    printf("test 1{hello}:\n");
+    char arr9[] = {"hello"};
+    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) arr9, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = strlen_c(arr9);
+    a = strlen_a(arr9);
     emu = armemu(&state, &cpsr);
     printf("strlen\n");
-    printf("strlen_c(Hello, World!) = %d\n", c);
-    printf("strlen_a(Hello, World!) = %d\n", a);
-    printf("emu(strlen(Hello, World!)) = %d\n", emu);
+    printf("strlen_c(hello) = %d\n", c);
+    printf("strlen_a(hello) = %d\n", a);
+    printf("emu(strlen(hello)) = %d\n", emu);
     arm_state_print(&state);
-    //print_cpsr_state(&cpsr);
     cache_print(&dmc);
+    printf("\n");
 
-*/        
+    printf("test 2{Hello World!}:\n");
+    char arr10[] = {"Hello World!"};
+    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) arr10, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = strlen_c(arr10);
+    a = strlen_a(arr10);
+    emu = armemu(&state, &cpsr);
+    printf("strlen\n");
+    printf("strlen_c(Hello World!) = %d\n", c);
+    printf("strlen_a(Hello World!) = %d\n", a);
+    printf("emu(strlen(Hello World!)) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    printf("test 3{'A', 's', 's', 'e', 'm', 'b', 'l', 'y'}:\n");
+    char arr11[] = {'A', 's', 's', 'e', 'm', 'b', 'l', 'y', '\0'};
+    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) arr11, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = strlen_c(arr11);
+    a = strlen_a(arr11);
+    emu = armemu(&state, &cpsr);
+    printf("strlen\n");
+    printf("strlen_c('A', 's', 's', 'e', 'm', 'b', 'l', 'y') = %d\n", c);
+    printf("strlen_a('A', 's', 's', 'e', 'm', 'b', 'l', 'y') = %d\n", a);
+    printf("emu(strlen('A', 's', 's', 'e', 'm', 'b', 'l', 'y')) = %d\n", emu);
+    arm_state_print(&state);
+    cache_print(&dmc);
+    printf("\n");
+
+    printf("test 4{ARM Assembly Programming}:\n");
+    char arr12[] = {"ARM Assembly Programming"};
+    arm_state_init(&state, (unsigned int *) strlen_a, (unsigned int) arr12, 0, 0, 0);
+    init_cpsr_state(&cpsr);
+    c = strlen_c(arr12);
+    a = strlen_a(arr12);
+    emu = armemu(&state, &cpsr);
+    printf("strlen\n");
+    printf("strlen_c(ARM Assembly Programming) = %d\n", c);
+    printf("strlen_a(ARM Assembly Programming) = %d\n", a);
+    printf("emu(strlen(ARM Assembly Programming)) = %d\n", emu);
+    arm_state_print(&state); 
+    cache_print(&dmc);  
+    printf("\n");  
     return 0;
 }
